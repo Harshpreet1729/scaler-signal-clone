@@ -1,0 +1,45 @@
+# Local configuration (safe examples remain source files)
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage*
+htmlcov/
+*.egg-info/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+npm-debug.log*
+
+# Future local data, including SQLite sidecars
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+
+# Generated test/debug artifacts
+test-results/
+playwright-report/
+playwright/.cache/
+coverage/
+artifacts/
+tmp/
+screenshots/
+*.log
+
+# OS/editor artifacts
+.DS_Store
+Thumbs.db
+.idea/
