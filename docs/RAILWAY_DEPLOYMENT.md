@@ -35,7 +35,7 @@ Both services have exact `FRONTEND_ORIGIN=https://frontend-production-5f84.up.ra
 
 The initial frontend build compiled but failed image export because a custom install override skipped Corepack preparation. Removing `RAILPACK_INSTALL_CMD` fixed this. Successful frontend deployment `08dc2adb-17cd-406d-a994-4efd896c2353` used a clean archive of committed source only. GitHub source remains connected. Backend was built from GitHub; successful persistence redeployment is `8cc3262f-67cd-4d4e-900f-48098b1dd5d1`.
 
-The dashboard displayed **Auto deploy unavailable** when connecting the new repository. Do not assume future pushes deploy automatically. Use an explicitly selected service's manual repository deployment/redeploy, or a clean tracked-source archive with `railway up`; never upload the developer working directory without verifying exclusions. Changing the public WS hostname requires rebuilding Next.js. Do not alter GitHub App access without authorization.
+The dashboard initially displayed **Auto deploy unavailable** while source settings were being staged. After connection completed, the documentation push `0bcc701` triggered actual GitHub deployments for both services, so push deployment is now verified. No GitHub App permissions were changed. For a manual recovery use the explicitly selected service's repository deployment/redeploy, or a clean tracked-source archive with `railway up`; never upload the developer working directory without verifying exclusions. Changing the public WS hostname requires rebuilding Next.js.
 
 ## Fresh database and seed
 
@@ -77,7 +77,7 @@ LeetMentor public homepage returned HTTP 200; its configuration/database were un
 ## Remaining scope and operations
 
 - Group writes/sending/admin membership, typing and live delivered/read acknowledgments remain Phase 5. Seeded group history/status examples do not implement those live features.
-- No load test, full-cycle billing observation, automatic GitHub push deployment or disaster-recovery restore has been verified.
+- No load test, full-cycle billing observation or disaster-recovery restore has been verified. Automatic GitHub push deployment was observed after the source connection completed.
 - Railway's current dashboard restricts creating managed backups/PITR to Pro. No upgrade was made. Before future schema changes, use a consistent SQLite backup API snapshot and download it to protected off-host storage; see the backup/rollback recipe in `RAILWAY_DEPLOY_PLAN.md`. A same-volume copy alone is not disaster recovery.
 - Source-only rollback must retain `/data` and match migration compatibility. Do not run `alembic downgrade base`; it drops the initial schema/data. Never re-seed/reset a populated public DB on restart.
 - Pause for owner review. Deployment authorization does not authorize Phase 5.
