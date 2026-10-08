@@ -1,6 +1,8 @@
 # Scaler Signal assignment
 
-**Phase 4 validated, awaiting approval:** authenticated contacts, own conversations/history, direct-thread creation and persistent live direct messaging are connected to the approved Signal-inspired UI. **60 backend tests and 24 Playwright tests pass**, along with lint/typecheck/build and pip check. Group history is readable; group sending/management, typing and live delivery/read acknowledgments remain Phase 5. See [Phase 4 handoff](docs/PHASE_4_HANDOFF.md) and the preserved [Phase 3 visual QA](docs/PHASE_3_VISUAL_QA.md).
+**Phase 4 deployed:** authenticated contacts, own conversations/history, direct-thread creation and persistent live direct messaging are connected to the approved Signal-inspired UI. **67 backend tests and 24 Playwright tests pass**, along with lint/typecheck/build. Group history is readable; group sending/management, typing and live delivery/read acknowledgments remain Phase 5. See [Phase 4 handoff](docs/PHASE_4_HANDOFF.md), [production verification](docs/RAILWAY_DEPLOYMENT.md) and the preserved [Phase 3 visual QA](docs/PHASE_3_VISUAL_QA.md).
+
+Hosted demo: **[Open Signal assignment demo](https://frontend-production-5f84.up.railway.app/)**. [Backend health](https://backend-production-5383.up.railway.app/v1/health/live). Log in as `alice`, `bob`, `carol` or `dave` with demo OTP `123456`. Two separate browser profiles can exchange direct messages. This early deployment does not complete the remaining assignment requirements.
 
 **Deadline: Friday, 9 October 2026, 6:00 PM IST (12:30 UTC).** This user-confirmed date supersedes historical “unknown deadline” notes in the preserved Phase 0 docs.
 

@@ -1,6 +1,8 @@
 # Railway early deployment preflight
 
-Status: local preparation only, 9 October 2026. Submission deadline: **9 October 2026, 18:00 IST**. No Railway/GitHub resources, domains, deployments, commits or pushes were made. `D:\Scalar AI` currently has no Git repository, so a Git diff is unavailable. Publishing an original public repository and provisioning require separate permission.
+Status: deployment authorized and executed, 9 October 2026. Submission deadline: **9 October 2026, 18:00 IST**. The final owner decision uses Railway for both services and a **$10/month workspace ceiling**, keeping the existing hard limit unchanged. See [actual URLs, applied settings and verification](RAILWAY_DEPLOYMENT.md). The sections below preserve the original preflight recipe and local evidence; historical statements about no external changes/unassigned URLs describe that preflight, not current state.
+
+Live-build correction: omit `RAILPACK_INSTALL_CMD`. With `packageManager: npm@11.6.2`, Railpack 0.40.1's custom install override skipped Corepack preparation and failed exporting `/opt/corepack`. The successful build used Railpack's default Corepack setup and `npm install` with the committed lockfile. Local installation remains `npm ci`. No application dependencies or runtime pins changed.
 
 This can host the current Phase 4 demo; it does **not** complete the assignment. Group writes/sending, typing and live delivered/read acknowledgments remain Phase 5 work. Existing mock-OTP/no-E2EE notices must remain visible. Only fictitious profiles, original avatars and explicit sample fixtures belong in the public demo.
 
@@ -10,7 +12,7 @@ This can host the current Phase 4 demo; it does **not** complete the assignment.
 |---|---|---|
 | Source root | `/frontend` | `/backend` |
 | Builder | Railpack | Railpack |
-| Install | `npm ci --include=dev` | Railpack pip install from pinned `requirements.txt` |
+| Install | Railpack default Corepack setup and lockfile-based `npm install` | Railpack pip install from pinned `requirements.txt` |
 | Build command | `npm run build` | Default; **no database action** |
 | Pre-deploy command | Empty | **Empty: volume unavailable here** |
 | Start command | `npm run start:production` | `python -m app.startup` |
@@ -41,7 +43,7 @@ Replace `<FRONTEND_DOMAIN>` and `<BACKEND_DOMAIN>` with the actual generated hos
 | `AUTH_RATE_LIMIT` | Unset | `30` | Combined auth attempts per observed gateway IP per minute |
 | `RAILPACK_NODE_VERSION` | `24.13.0` | Unset | Build runtime pin |
 | `RAILPACK_PYTHON_VERSION` | Unset | `3.13.12` | Build runtime pin |
-| `RAILPACK_INSTALL_CMD` | `npm ci --include=dev` | Unset | Preserve lockfile and TypeScript build tools |
+| `RAILPACK_INSTALL_CMD` | **Unset** | Unset | Use Railpack's default Corepack/install flow; see live-build correction |
 | `NEXT_TELEMETRY_DISABLED` | `1` | Unset | Optional |
 | `RAILWAY_DEPLOYMENT_DRAINING_SECONDS` | `10` | `10` | Graceful shutdown allowance |
 | `RAILWAY_VOLUME_MOUNT_PATH` | Unset | Railway-provided `/data` | **Do not set yourself**; attaching volume provides it |
