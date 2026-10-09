@@ -266,7 +266,18 @@ test("real-data screenshots and viewport geometry", async ({ page }, testInfo) =
   await capture(mobile ? "mobile-direct" : "desktop-direct-1440");
   await back(page);
   await page.getByRole("button", { name: /Weekend Plans/ }).click();
-  await expect(page.getByRole("region", { name: "Message history" }).locator(".message-bubble")).toHaveCount(2);
+  await expect(page.getByRole("region", { name: "Weekend Plans conversation" })).toBeVisible();
+  const groupHistory = page.getByRole("region", { name: "Message history" });
+  // Other tests may append messages; verify the seed content rather than a shared total.
+  for (const [body, direction] of [
+    ["Weekend Plans: picnic at noon?", "outgoing"],
+    ["I can bring snacks.", "incoming"],
+  ] as const) {
+    const message = groupHistory.locator(".message-row").filter({ has: page.getByText(body, { exact: true }) });
+    await expect(message).toHaveCount(1);
+    await expect(message).toHaveClass(new RegExp(`\\b${direction}\\b`));
+    await expect(message.locator(".message-bubble time")).not.toBeEmpty();
+  }
   await capture(mobile ? "mobile-group" : "desktop-group-1440");
   const sizes = mobile ? [{ width: 390, height: 844 }] : [{ width: 1440, height: 900 }, { width: 1280, height: 800 }, { width: 1024, height: 768 }];
   for (const size of sizes) {
