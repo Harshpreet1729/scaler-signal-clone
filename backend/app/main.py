@@ -1,4 +1,5 @@
-from contextlib import asynccontextmanager
+import asyncio
+from contextlib import asynccontextmanager, suppress
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -9,6 +10,8 @@ from app.auth import APIError, RateLimiter
 from app.database import make_engine
 from app.routes.auth import router as auth_router
 from app.routes.conversations import router as conversations_router
+from app.routes.groups import router as groups_router
+from app.routes.receipts import router as receipts_router
 from app.routes.socket import router as socket_router
 from app.realtime import SocketManager, TicketStore
 
@@ -22,8 +25,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI):
-        yield
-        engine.dispose()
+        typing_task = asyncio.create_task(_app.state.sockets.typing_loop())
+        try:
+            yield
+        finally:
+            typing_task.cancel()
+            with suppress(asyncio.CancelledError):
+                await typing_task
+            engine.dispose()
 
     app = FastAPI(title="Scaler Signal API", version="0.2.0", lifespan=lifespan)
     app.state.settings, app.state.engine = settings, engine
@@ -56,5 +65,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(health_router, prefix="/v1")
     app.include_router(auth_router, prefix="/v1")
     app.include_router(conversations_router, prefix="/v1")
+    app.include_router(groups_router, prefix="/v1")
+    app.include_router(receipts_router, prefix="/v1")
     app.include_router(socket_router, prefix="/v1")
     return app

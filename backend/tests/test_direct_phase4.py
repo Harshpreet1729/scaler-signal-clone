@@ -91,7 +91,7 @@ def test_send_idempotence_receipts_pagination_and_recreation(client, settings, e
     assert client.post(path, headers=alice, json={**payload, "body": "changed"}).status_code == 409
     assert client.post("/v1/conversations/900002/messages", headers=alice, json=payload).status_code == 409
     assert client.post(path, headers=dave, json={**payload, "client_message_id": str(uuid4())}).status_code == 404
-    assert client.post("/v1/conversations/900003/messages", headers=alice, json={**payload, "client_message_id": str(uuid4())}).status_code == 403
+    assert client.post("/v1/conversations/900003/messages", headers=alice, json={**payload, "client_message_id": str(uuid4())}).status_code == 201
     for value in ("  ", "x" * 4001):
         assert client.post(path, headers=alice, json={"client_message_id": str(uuid4()), "body": value}).status_code == 422
     assert client.post(path, headers=alice, json={"client_message_id": "bad", "body": "test"}).status_code == 422

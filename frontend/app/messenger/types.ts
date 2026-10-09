@@ -3,7 +3,7 @@ export type Person = { id: string; name: string; username: string; avatar: strin
 export type ReceiptState = "sending" | "sent" | "delivered" | "read" | "failed";
 export type ChatMessage = {
   id: string; sender: string; body: string; time: string; date: string;
-  direction: "incoming" | "outgoing"; receipt?: ReceiptState; clientMessageId?: string;
+  direction: "incoming" | "outgoing"; receipt?: ReceiptState; unread?: boolean; clientMessageId?: string;
 };
 export type Conversation = {
   id: string; name: string; kind: "direct" | "group"; avatar: string;

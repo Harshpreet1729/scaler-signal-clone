@@ -3,8 +3,15 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { backendOrigin } from "./backend";
 
-type Operation = "users" | "contacts" | "contact-add" | "conversations" | "direct-create" | "detail" | "history" | "send";
-const operations: Record<Operation, { method: "GET" | "POST"; path: (id?: number) => string; params: readonly string[] }> = {
+type Operation = "users" | "contacts" | "contact-add" | "conversations" | "direct-create" | "detail" | "history" | "send" | "group-create" | "group-rename" | "members" | "member-add" | "member-remove" | "delivered" | "read";
+const operations: Record<Operation, { method: "GET" | "POST" | "PATCH" | "DELETE"; path: (id?: number, userId?: number) => string; params: readonly string[] }> = {
+  "group-create": { method: "POST", path: () => "/v1/conversations/groups", params: [] },
+  "group-rename": { method: "PATCH", path: id => `/v1/conversations/${id}`, params: [] },
+  members: { method: "GET", path: id => `/v1/conversations/${id}/members`, params: [] },
+  "member-add": { method: "POST", path: id => `/v1/conversations/${id}/members`, params: [] },
+  "member-remove": { method: "DELETE", path: (id, userId) => `/v1/conversations/${id}/members/${userId}`, params: [] },
+  delivered: { method: "POST", path: id => `/v1/conversations/${id}/delivered`, params: [] },
+  read: { method: "POST", path: id => `/v1/conversations/${id}/read`, params: [] },
   users: { method: "GET", path: () => "/v1/users", params: ["query"] },
   contacts: { method: "GET", path: () => "/v1/contacts", params: [] },
   "contact-add": { method: "POST", path: () => "/v1/contacts", params: [] },
@@ -33,10 +40,12 @@ async function boundedText(stream: ReadableStream<Uint8Array> | null, limit: num
 }
 
 /** Explicit fixed operations; never accepts a browser-selected upstream path or identity. */
-export async function forwardChat(request: Request, operation: Operation, idText?: string) {
+export async function forwardChat(request: Request, operation: Operation, idText?: string, userText?: string) {
   const route = operations[operation];
   const id = idText === undefined ? undefined : Number(idText);
   if (idText !== undefined && (!/^[1-9][0-9]*$/.test(idText) || !Number.isSafeInteger(id))) return error(404, "CONVERSATION_NOT_FOUND", "Conversation not found.");
+  const userId = userText === undefined ? undefined : Number(userText);
+  if (userText !== undefined && (!/^[1-9][0-9]*$/.test(userText) || !Number.isSafeInteger(userId))) return error(404, "USER_NOT_FOUND", "User not found.");
   const origin = process.env.FRONTEND_ORIGIN ?? "http://127.0.0.1:3000";
   let parsed: URL;
   try { parsed = new URL(origin); }
@@ -46,12 +55,12 @@ export async function forwardChat(request: Request, operation: Operation, idText
     return error(503, "CONFIGURATION", "Messaging is not configured.");
   }
   if (request.method !== route.method) return error(405, "METHOD", "Method not allowed.");
-  if (route.method === "POST" && request.headers.get("origin") !== origin) return error(403, "ORIGIN", "Request origin is not allowed.");
+  if (route.method !== "GET" && request.headers.get("origin") !== origin) return error(403, "ORIGIN", "Request origin is not allowed.");
   const key = process.env.INTERNAL_API_KEY ?? "";
   if (key.length < 32) return error(503, "AUTH_UNCONFIGURED", "Authentication is not configured.");
   const token = (await cookies()).get(cookieName)?.value;
   if (!token || !/^[A-Za-z0-9_-]{43}$/.test(token)) return error(401, "UNAUTHENTICATED", "Sign in to continue.");
-  const url = new URL(route.path(id), backendOrigin());
+  const url = new URL(route.path(id, userId), backendOrigin());
   const incoming = new URL(request.url);
   for (const name of route.params) {
     const value = incoming.searchParams.get(name);
@@ -59,7 +68,7 @@ export async function forwardChat(request: Request, operation: Operation, idText
   }
   const headers = new Headers({ Accept: "application/json", Authorization: `Bearer ${token}`, "X-Internal-API-Key": key });
   let body: string | undefined;
-  if (route.method === "POST") {
+  if (route.method !== "GET") {
     if (!request.headers.get("content-type")?.startsWith("application/json")) return error(415, "CONTENT_TYPE", "Use JSON requests.");
     // 4000 Unicode characters can exceed 8 KiB once encoded as JSON.
     try { body = await boundedText(request.body, operation === "send" ? 32768 : 8192); }

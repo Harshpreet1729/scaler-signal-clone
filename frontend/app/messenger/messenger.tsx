@@ -17,8 +17,7 @@ export default function Messenger({ profile, csrf, onLogout, busy, error }: Prop
   const [dialog, setDialog] = useState<DialogState>(null);
   const [menu, setMenu] = useState<"rail" | "list" | "chat" | null>(null);
   const [toast, setToast] = useState<{ text: string; sequence: number } | null>(null);
-  const { data, contacts, status, problem, send, directory, addContact, startDirect, loadOlder, older } = useChatData(profile, csrf, query, unreadOnly, selectedId);
-  const conversation = data.conversations.find(item => item.id === selectedId);
+  const { data, selectedConversation: conversation, acknowledge, typing, setTyping, incoming, dismissIncoming, contacts, status, problem, send, directory, addContact, startDirect, createGroup, changeGroup, loadOlder, older } = useChatData(profile, csrf, query, unreadOnly, selectedId);
   useEffect(() => {
     if (!toast) return;
     const timer = setTimeout(() => setToast(null), 6000);
@@ -26,13 +25,13 @@ export default function Messenger({ profile, csrf, onLogout, busy, error }: Prop
   }, [toast]);
   function notify(text: string) { setToast(previous => ({ text, sequence: (previous?.sequence ?? 0) + 1 })); }
   function open(kind: DialogState) { setDialog(kind); setMenu(null); }
-  return <main className={"messenger " + (selectedId ? "chat-selected" : "")} aria-label="Messenger preview">
+  return <main className={"messenger " + (conversation ? "chat-selected" : "")} aria-label="Messenger preview">
     <NavigationRail profile={profile} onSettings={() => open("settings")} onMenu={() => setMenu(menu === "rail" ? null : "rail")} onPlaceholder={name => open(name as "Calls" | "Stories")} onChats={() => setSelectedId(null)} />
     <ConversationSidebar conversations={data.conversations} selectedId={selectedId} query={query} unreadOnly={unreadOnly} onQuery={setQuery} onUnread={setUnreadOnly} onSelect={setSelectedId} onNew={() => open("new-chat")} onMenu={() => setMenu(menu === "list" ? null : "list")} onAbout={() => open("about")} status={status} />
     <ChatPane conversation={conversation} messages={selectedId ? data.messages[selectedId] ?? [] : []} people={data.people}
       onBack={() => setSelectedId(null)} onDetails={() => open(conversation?.kind === "group" ? "members" : "contact")}
       onSearch={() => open("search-chat")} onMenu={() => setMenu(menu === "chat" ? null : "chat")}
-      onUnavailable={notify} onNew={() => open("new-chat")} onSend={conversation?.kind === "direct" ? send : undefined}
+      onUnavailable={notify} onNew={() => open("new-chat")} onSend={send} onRead={acknowledge} onTyping={setTyping} typingNames={(selectedId ? typing[selectedId]?.ids ?? [] : []).map(id => data.people[id]?.name.split(" ")[0] ?? "Member")}
       onLoadOlder={() => { if (selectedId) void loadOlder(selectedId).catch(issue => notify(issue.message)); }} hasOlder={Boolean(selectedId && older[selectedId])} />
     {menu && <Menu scope={menu} onClose={() => setMenu(null)} items={menu === "chat" ? [
       { label: conversation?.kind === "group" ? "Group details" : "Contact details", icon: "group", action: () => open(conversation?.kind === "group" ? "members" : "contact") },
@@ -45,8 +44,8 @@ export default function Messenger({ profile, csrf, onLogout, busy, error }: Prop
       { label: "About this preview", icon: "chat", action: () => open("about") },
     ]} />}
     {dialog && <MessengerDialog key={dialog} kind={dialog} profile={profile} data={data} conversation={conversation} contacts={contacts}
-      directory={directory} addContact={addContact} startDirect={startDirect} onClose={() => setDialog(null)} onOpen={open}
+      directory={directory} addContact={addContact} startDirect={startDirect} createGroup={createGroup} changeGroup={changeGroup} onClose={() => setDialog(null)} onOpen={open}
       onSelect={id => { setQuery(""); setUnreadOnly(false); setSelectedId(id); }} onLogout={onLogout} busy={busy} />}
-    {(toast || error || problem) && <div className={"toast " + (error || problem ? "toast-error" : "")} role={error || problem ? "alert" : "status"}><span>{error || problem || toast?.text}</span>{!error && !problem && <IconButton icon="close" label="Dismiss notification" onClick={() => setToast(null)} />}</div>}
+    {(toast || incoming || error || problem) && <div className={"toast " + (error || problem ? "toast-error" : "")} role={error || problem ? "alert" : "status"}><span>{error || problem || toast?.text || incoming?.text}</span>{!error && !problem && <IconButton icon="close" label="Dismiss notification" onClick={() => { setToast(null); dismissIncoming(); }} />}</div>}
   </main>;
 }

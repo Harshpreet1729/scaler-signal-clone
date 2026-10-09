@@ -245,3 +245,6 @@ svg { flex-shrink: 0; vertical-align: middle; }
   .auth-page { padding: 26px 16px; }
   .auth-card { padding: 22px; }
 }
+
+.typing-indicator { flex-shrink: 0; padding: 4px 26px; color: #535b6b; font-size: 12px; background: white; }
+.group-details .dialog-form .secondary-button { margin-top: 8px; }

@@ -34,9 +34,13 @@ def message_status(db: Session, message: Message) -> str:
 
 
 def public_message(db: Session, message: Message) -> dict:
+    receipts = list(db.scalars(select(MessageReceipt).where(MessageReceipt.message_id == message.id)))
     return {"id": message.id, "conversation_id": message.conversation_id, "sender_id": message.sender_id,
             "client_message_id": message.client_message_id, "body": message.body,
-            "created_at": message.created_at, "status": message_status(db, message)}
+            "created_at": message.created_at, "status": message_status(db, message),
+            "recipient_ids": [row.recipient_id for row in receipts],
+            "delivered_ids": [row.recipient_id for row in receipts if row.delivered_at is not None],
+            "read_ids": [row.recipient_id for row in receipts if row.read_at is not None]}
 
 
 def public_conversation(db: Session, conversation: Conversation, user_id: int) -> dict:
@@ -104,8 +108,7 @@ def send_direct(db: Session, sender_id: int, conversation_id: int, client_messag
         raise APIError(422, "MESSAGE_ID", "Use a lowercase UUID for the message ID.") from None
     db.execute(text("BEGIN IMMEDIATE"))
     conversation = active_conversation(db, conversation_id, sender_id)
-    if conversation.kind != "direct":
-        raise APIError(403, "GROUP_SEND_DEFERRED", "Group sending is available in Phase 5.")
+    participants = [person["id"] for person in members(db, conversation_id)]
     existing = db.scalar(select(Message).where(Message.sender_id == sender_id,
                                                Message.client_message_id == client_message_id))
     if existing:
@@ -113,17 +116,17 @@ def send_direct(db: Session, sender_id: int, conversation_id: int, client_messag
             raise APIError(409, "MESSAGE_ID_CONFLICT", "This message ID was already used for different content.")
         result = public_message(db, existing)
         db.rollback()
-        return result, False, [conversation.direct_low_user_id, conversation.direct_high_user_id]
+        return result, False, participants
     current = now_ms()
     message = Message(conversation_id=conversation_id, sender_id=sender_id,
                       client_message_id=client_message_id, body=body, created_at=current)
     db.add(message)
     db.flush()
-    recipient = conversation.direct_high_user_id if sender_id == conversation.direct_low_user_id else conversation.direct_low_user_id
-    db.add(MessageReceipt(message_id=message.id, recipient_id=recipient, conversation_id=conversation_id))
+    db.add_all(MessageReceipt(message_id=message.id, recipient_id=recipient, conversation_id=conversation_id)
+               for recipient in participants if recipient != sender_id)
     conversation.last_activity_at = max(current, conversation.last_activity_at + 1)
     conversation.version += 1
     db.flush()
     result = public_message(db, message)
     db.commit()
-    return result, True, [sender_id, recipient]
+    return result, True, participants

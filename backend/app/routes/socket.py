@@ -50,14 +50,16 @@ async def ws_endpoint(socket: WebSocket) -> None:
         if session_id is None:
             await socket.close(code=4401)
             return
-        with Session(app.state.engine) as db:
-            session = db.get(AuthSession, session_id)
-            if session is None:
-                await socket.close(code=4401)
-                return
-            user_id = session.user_id
+        def session_user():
+            with Session(app.state.engine) as db:
+                session = db.get(AuthSession, session_id)
+                return session.user_id if session else None
+        user_id = await run_in_threadpool(session_user)
+        if user_id is None:
+            await socket.close(code=4401)
+            return
         connection = Connection(socket, user_id, session_id)
-        if not app.state.sockets.active(connection):
+        if not await app.state.sockets.is_active(connection):
             await socket.close(code=4401)
             return
         app.state.sockets.add(connection)
@@ -66,7 +68,7 @@ async def ws_endpoint(socket: WebSocket) -> None:
             try:
                 raw = await asyncio.wait_for(socket.receive_text(), timeout=25)
             except TimeoutError:
-                if not app.state.sockets.active(connection):
+                if not await app.state.sockets.is_active(connection):
                     await socket.close(code=4401)
                     break
                 await connection.send({"v": 1, "type": "ping"})
@@ -74,7 +76,7 @@ async def ws_endpoint(socket: WebSocket) -> None:
             if len(raw.encode("utf-8")) > MAX_FRAME:
                 await socket.close(code=1009)
                 break
-            if not app.state.sockets.active(connection):
+            if not await app.state.sockets.is_active(connection):
                 await socket.close(code=4401)
                 break
             try:
@@ -89,6 +91,12 @@ async def ws_endpoint(socket: WebSocket) -> None:
                     await connection.send({"v": 1, "type": "pong", "request_id": request_id})
                 elif kind == "pong":
                     continue
+                elif kind == "typing.set":
+                    conversation_id, data = frame.get("conversation_id"), frame.get("payload")
+                    if type(conversation_id) is not int or conversation_id < 1 or not isinstance(data, dict) or type(data.get("typing")) is not bool:
+                        raise APIError(422, "FRAME", "Invalid typing frame.")
+                    async with app.state.sockets.mutations:
+                        await app.state.sockets.set_typing(connection, conversation_id, data["typing"])
                 elif kind == "message.send":
                     conversation_id = frame.get("conversation_id")
                     data = frame.get("payload")
@@ -102,9 +110,10 @@ async def ws_endpoint(socket: WebSocket) -> None:
                         with Session(app.state.engine) as db:
                             return send_direct(db, user_id, conversation_id, client_id, body)
 
-                    message, created, recipients = await run_in_threadpool(commit)
-                    if created:
-                        await app.state.sockets.publish(message, recipients)
+                    async with app.state.sockets.mutations:
+                        message, created, recipients = await run_in_threadpool(commit)
+                        if created:
+                            await app.state.sockets.publish(message, recipients)
                     await connection.send({"v": 1, "type": "message.accepted", "request_id": request_id,
                                            "conversation_id": conversation_id, "payload": {"message": message, "created": created}})
                 else:
@@ -128,4 +137,4 @@ async def ws_endpoint(socket: WebSocket) -> None:
                 pass
     finally:
         if connection:
-            app.state.sockets.discard(connection)
+            await app.state.sockets.disconnected(connection)

@@ -29,13 +29,14 @@ test("seeded conversations, directory, contacts, search and group scope", async 
   await expect(page.getByText("No conversations found")).toBeVisible();
   await page.getByRole("button", { name: "Clear search", exact: true }).click();
   await page.getByRole("button", { name: "Filter by unread" }).click();
-  await expect(rows).toHaveCount(1);
+  const unread = await page.request.get("/api/conversations?filter=unread");
+  await expect(rows).toHaveCount((await unread.json()).conversations.length);
   await page.getByRole("button", { name: "Clear filter" }).click();
   await page.getByRole("button", { name: /Weekend Plans/ }).click();
   await expect(page.getByRole("button", { name: "Send message" })).toBeDisabled();
   await page.getByRole("button", { name: "View group members" }).click();
   await expect(page.getByText("Admin", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Add members" })).toBeDisabled();
+  await expect(page.getByLabel("Add members", { exact: true })).toBeEnabled();
   await page.getByRole("button", { name: "Close dialog" }).click();
   await back(page);
   await page.getByRole("button", { name: "New chat", exact: true }).click();
@@ -97,9 +98,18 @@ test("two sessions exchange persistent direct messages", async ({ browser, page 
 
 test("chat menus, loaded search, settings and placeholder dialogs retain keyboard behavior", async ({ page }) => {
   await login(page, "alice");
+  let releaseHistory = () => {};
+  const gate = new Promise<void>(resolve => { releaseHistory = resolve; });
+  await page.route(/\/api\/conversations\/900001\/messages\?limit=50$/, async route => {
+    const response = await route.fetch();
+    await gate;
+    await route.fulfill({ response });
+  });
   await page.getByRole("button", { name: /Bob Patel/ }).first().click();
   await page.getByRole("button", { name: "Search this conversation" }).click();
   await page.getByLabel("Search loaded messages").fill("see you");
+  await expect(page.locator(".search-results article")).toHaveCount(0);
+  releaseHistory();
   await expect(page.locator(".search-results article")).toHaveCount(1);
   await page.getByRole("button", { name: "Close dialog" }).click();
   await page.getByRole("button", { name: "Chat menu", exact: true }).click();
@@ -118,8 +128,8 @@ test("chat menus, loaded search, settings and placeholder dialogs retain keyboar
   await expect(page.getByRole("alert").filter({ hasText: "choose at least one member" })).toBeVisible();
   await page.getByRole("checkbox", { name: /Bob Patel/ }).check();
   await page.getByRole("button", { name: "Create group" }).click();
-  await expect(page.getByRole("status")).toContainText("No group was created");
-  await page.keyboard.press("Escape");
+  await expect(page.getByRole("region", { name: "Picnic conversation" })).toBeVisible();
+  await back(page);
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   await expect(page.getByText("@alice", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Privacy", exact: true }).click();

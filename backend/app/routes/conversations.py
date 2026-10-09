@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
-from app.auth import APIError, Actor, Database, public_user, require_csrf, require_gateway
+from app.auth import APIError, Actor, Database, public_user, require_csrf, require_gateway, release_identity_connection
 from app.models import Contact, Conversation, ConversationMember, Message, User
 from app.services.direct import active_conversation, create_contact, create_direct, public_conversation, public_message, send_direct
 
@@ -50,6 +50,7 @@ def contacts(identity: Actor, db: Database) -> dict:
 @router.post("/contacts")
 def add_contact(payload: TargetInput, request: Request, response: Response, identity: Actor) -> dict:
     require_csrf(request, identity)
+    release_identity_connection(identity)
     with Session(request.app.state.engine) as db:
         user, created = create_contact(db, identity.user.id, payload.user_id)
     response.status_code = 201 if created else 200
@@ -96,6 +97,7 @@ def conversations(identity: Actor, db: Database, query: Annotated[str, Query(max
 @router.post("/conversations/direct")
 async def direct(payload: TargetInput, request: Request, response: Response, identity: Actor) -> dict:
     require_csrf(request, identity)
+    release_identity_connection(identity)
     def commit() -> tuple[dict, bool]:
         with Session(request.app.state.engine) as db:
             return create_direct(db, identity.user.id, payload.user_id)
@@ -140,13 +142,15 @@ def history(conversation_id: int, identity: Actor, db: Database,
 @router.post("/conversations/{conversation_id}/messages")
 async def send(conversation_id: int, payload: SendInput, request: Request, response: Response, identity: Actor) -> dict:
     require_csrf(request, identity)
+    release_identity_connection(identity)
 
     def commit() -> tuple[dict, bool, list[int]]:
         with Session(request.app.state.engine) as db:
             return send_direct(db, identity.user.id, conversation_id, payload.client_message_id, payload.body)
 
-    message, created, recipients = await run_in_threadpool(commit)
-    if created:
-        await request.app.state.sockets.publish(message, recipients)
+    async with request.app.state.sockets.mutations:
+        message, created, recipients = await run_in_threadpool(commit)
+        if created:
+            await request.app.state.sockets.publish(message, recipients)
     response.status_code = 201 if created else 200
     return {"message": message, "created": created}

@@ -1,12 +1,10 @@
 # Scaler Signal assignment
 
-**Phase 4 deployed:** authenticated contacts, own conversations/history, direct-thread creation and persistent live direct messaging are connected to the approved Signal-inspired UI. **67 backend tests and 24 Playwright tests pass**, along with lint/typecheck/build. Group history is readable; group sending/management, typing and live delivery/read acknowledgments remain Phase 5. See [Phase 4 handoff](docs/PHASE_4_HANDOFF.md), [production verification](docs/RAILWAY_DEPLOYMENT.md) and the preserved [Phase 3 visual QA](docs/PHASE_3_VISUAL_QA.md).
+**Phase 5 adds group creation/admin membership and messaging, durable delivered/read acknowledgments, unread state, typing and incoming toasts** to the authenticated Signal-inspired app. Local validation: 78 backend tests, 32 desktop/mobile browser tests, lint, TypeScript and production build pass. See [Phase 5 handoff and actual validation](docs/PHASE_5_HANDOFF.md).
 
-Hosted demo: **[Open Signal assignment demo](https://frontend-production-5f84.up.railway.app/)**. [Backend health](https://backend-production-5383.up.railway.app/v1/health/live). Log in as `alice`, `bob`, `carol` or `dave` with demo OTP `123456`. Two separate browser profiles can exchange direct messages. This early deployment does not complete the remaining assignment requirements.
+Access the [public demo](https://frontend-production-5f84.up.railway.app/), [public repository](https://github.com/Harshpreet1729/scaler-signal-clone) and [backend health](https://backend-production-5383.up.railway.app/v1/health/live). The owner authorized the Phase 5 production rollout on 9 October; GitHub pushes deploy both existing services. The earlier [Phase 4 production verification](docs/RAILWAY_DEPLOYMENT.md) is historical evidence, not a Phase 5 test report.
 
-**Deadline: Friday, 9 October 2026, 6:00 PM IST (12:30 UTC).** This user-confirmed date supersedes historical “unknown deadline” notes in the preserved Phase 0 docs.
-
-This is an interview assignment, not an official Signal client. **OTP is public and impersonable: use fictitious data only. There is no real end-to-end encryption.**
+**Deadline: 9 October 2026, 6:00 PM IST (12:30 UTC).** This is an original interview assignment, not an official Signal client. **Demo OTP `123456` is public and impersonable. Use fictitious data only. There is no real end-to-end encryption.**
 
 ## Prerequisites and installation
 
@@ -53,7 +51,7 @@ npm run dev
 
 Open [onboarding](http://127.0.0.1:3000). Use **Register**, a new username (3–32 ASCII letters/numbers/underscores), a display name (1–80 characters), an original Sky/Fern/Sun/Clay avatar, and **OTP 123456**. Usernames normalize to lowercase; display names are trimmed. Registration signs you in. Reload restores the persisted session; **Settings → Profile → Log out** revokes it. Use **Log in** with `alice`, `bob`, `carol`, or `dave` and **123456** after seeding. Registration and login are distinct operations.
 
-Use separate browser profiles or an incognito window for Alice and Bob. Alice opens Bob's existing chat; Bob opens Alice's. Enter sends, Shift+Enter inserts a newline. Both see the live exchange; refresh and select the thread again to verify saved history. New Chat searches the public demo directory and opens an existing or new direct thread; New Contact adds a directional contact. A fresh account starts with no chats. New sends remain **sent** after commit; opening a chat does not clear persisted unread state yet.
+Use separate browser profiles or an incognito window for Alice and Bob. Alice opens Bob's existing chat; Bob opens Alice's. Enter sends, Shift+Enter inserts a newline. Both see the live exchange; refresh and select the thread again to verify saved history. New Chat searches the public demo directory and opens an existing or new direct thread; New Contact adds a directional contact. A fresh account starts with no chats. Messages become **sent** after commit, **delivered** after recipient acknowledgment, and **read** after incoming messages are visible in the selected chat. Unread clears only after the read acknowledgment is stored.
 
 Local browser WebSockets connect directly to `ws://127.0.0.1:8000/v1/ws`. `frontend/.env.example` documents `NEXT_PUBLIC_WS_URL`; configure it before a build for a different backend. No credential is placed in this URL.
 
@@ -65,151 +63,89 @@ Stop servers with Ctrl+C. To review a production build locally, use `npm run bui
 
 Portable POSIX setup substitutes `python3.13 -m venv .venv` and `.venv/bin/python` for the Windows Python commands; npm commands are identical. On minimal Linux, Chromium may need `npx playwright install --with-deps chromium`. POSIX execution is not verified in this phase. If PowerShell blocks npm's shim, use `npm.cmd`/`npx.cmd` without changing execution policy.
 
-## Architecture, API and sessions
+## Groups, receipts and typing
 
-The Next route handlers are a thin **fixed-operation allowlist**. FastAPI owns normalization, validation, challenge consumption, profile selection and sessions. The browser never calls private FastAPI REST routes directly, and there is no generic proxy or browser-controlled destination.
+Use New Chat → New group, enter a name and select members. The creator is admin. Group details exposes rename, directory-based add, and removal to admins; every operation is also authorized on the server. Groups allow at most 100 active members and cannot lose their final admin. Direct membership cannot change.
 
-| Browser route | Backend route | Contract |
-|---|---|---|
-| GET `/api/health/live` | GET `/v1/health/live` | Public deterministic liveness |
-| POST `/api/auth/challenges` | POST `/v1/auth/challenges` | `username, purpose: register\|login`; returns challenge ID/expiry/purpose |
-| POST `/api/auth/register` | POST `/v1/auth/register` | `challenge_id, otp, display_name, avatar_key`; creates user/session |
-| POST `/api/auth/login` | POST `/v1/auth/login` | `challenge_id, otp`; session for an existing user |
-| GET `/api/auth/me` | GET `/v1/auth/me` | Current profile, CSRF token, session expiry |
-| POST `/api/auth/logout` | POST `/v1/auth/logout` | JSON `{}`, current session's `X-CSRF-Token`; revokes current session |
-| PATCH `/api/users/me` | PATCH `/v1/users/me` | `display_name, avatar_key`, CSRF; updates only current user |
-| GET `/api/users?query=...` | GET `/v1/users` | Authenticated directory; bounded query, public fields, excludes self |
-| GET/POST `/api/contacts` | GET/POST `/v1/contacts` | Own contacts; POST `user_id` is directional/idempotent, requires CSRF |
-| GET `/api/conversations` | GET `/v1/conversations` | Active membership only; recent order, preview/unread, query/filter/cursor |
-| POST `/api/conversations/direct` | POST `/v1/conversations/direct` | `user_id`, CSRF; canonical pair, returns existing thread on retry |
-| GET `/api/conversations/{id}` | GET `/v1/conversations/{id}` | Member-authorized detail, including readable seed groups |
-| GET `/api/conversations/{id}/messages` | GET `/v1/conversations/{id}/messages` | `limit` 1–100; `before_id` or `after_id`; ascending returned rows |
-| POST `/api/conversations/{id}/messages` | POST `/v1/conversations/{id}/messages` | Direct-only `client_message_id` UUID + nonblank `body` up to 4000 characters, CSRF |
-| POST `/api/auth/ws-ticket` | POST `/v1/auth/ws-ticket` | Current session + CSRF; one-use 30-second ticket |
+New members can see all earlier history, but receive no retroactive receipt rows. Removed members lose server access and live events; historical membership/receipt rows remain. Rejoining restores history and their original receipts. Content already received before removal cannot be recalled. Group delivered/read ticks require **all original send-time recipients** to acknowledge; a removed recipient can keep an old message partially acknowledged.
 
-The initial profile is selected in onboarding. PATCH is implemented/tested as an own-profile API; no profile-edit UI was added.
+Sending is temporary client state; sent means SQLite committed. A delivered acknowledgment confirms receipt by a recipient client. Reading requires incoming message elements intersecting the visible selected history while the document is visible. Merely fetching history, opening another conversation, or receiving a socket frame cannot mark it read. Unread derives from persisted receipt rows. Settings preference controls remain explicitly disabled placeholders; acknowledgments and typing are enabled for the demo.
 
-Challenges expire after **5 minutes**, accept at most **5 wrong-code attempts**, and are one-use/purpose-bound. A short SQLite `BEGIN IMMEDIATE` transaction serializes verification with account/session creation. A combined **30 attempts/minute per backend client IP** limits challenge/register/login operations in one process. Proxied users share the Next gateway IP, so this is deliberately a small global demo throttle, not sophisticated abuse prevention. Restart clears the in-memory window; the challenge attempt count persists. Temporary E2E servers raise only the rate limit to avoid test contention; a backend test verifies actual 429 behavior.
+Typing is per socket, aggregated per user, throttled to about two seconds and expires after five seconds (server sweep every half-second). Clear/send/blur/chat switch/logout/disconnect stops it. It never writes SQLite or reorders chats. A new incoming message outside the selected chat produces a deduplicated in-app toast; own sends and REST history do not.
 
-Each login creates an independent **7-day** session. SQLite stores its random session ID, SHA-256 token hash, CSRF token, expiry and optional revocation time; it never stores the raw bearer token. Expiry/revocation are checked on every private request and survive app recreation. Logout revokes only the current session and closes its sockets; other browser sessions remain signed in.
+## Architecture and API
 
-Only Next receives the temporary credential-bearing backend login/register response, using a shared server-only gateway key. It returns an explicitly selected public JSON shape and stores the bearer in `scaler_session`: **HttpOnly, SameSite=Lax, Path=/, no Domain**, expiry matching the session, **Secure for HTTPS**. HTTP is accepted only for loopback development/review. The raw bearer never enters browser JavaScript, localStorage or sessionStorage; CSRF remains in component memory and can be restored through `/auth/me`.
+Next.js App Router + TypeScript owns the UI and fixed-operation REST forwarding. FastAPI owns authentication, validation, authorization and transactions. SQLite with Alembic stores durable state. Native browser WebSockets connect directly to FastAPI. No Redis, ORM client, global state manager, or new dependency was added for Phase 5.
 
-Mutations require the configured exact **Origin**, including login/register (login-CSRF protection). Authenticated mutations also require the session-specific **X-CSRF-Token**; FastAPI checks it. Next constructs its own Authorization/internal-key headers from server configuration and cookie, ignoring browser Authorization/identity headers. Redirects are rejected; upstream timeouts are 5 seconds for auth, 8 for chat, 3 for health. JSON input is bounded to 8 KiB, or 32 KiB for message sends so 4000 Unicode characters fit; public errors are sanitized and bounded. Private responses use **Cache-Control: no-store**. Validation errors do not echo OTPs or input values. Logs contain route/status information, not credentials or bodies.
+Browser `/api` routes map to fixed backend `/v1` routes. The gateway accepts no arbitrary upstream path or browser identity. Private responses use `no-store`; mutations require exact frontend Origin plus session CSRF. Errors return `error.code` and `error.message`; inaccessible resources return 404, admin denial 403, invalid fields 422, conflicts 409.
 
-Typical errors: 400 ended challenge, 401 bad OTP/missing or expired/revoked session, 403 wrong purpose/gateway/origin/CSRF, 404 nonexistent login or absent feature route, 409 duplicate username/fixture collision, 413 oversize body, 415 non-JSON gateway mutation, 422 invalid/extra fields, 429 throttle, 503 unavailable/unconfigured service. Demo account existence is intentionally disclosed.
-
-### Direct messages and WebSockets
-
-FastAPI exposes `/v1/ws` directly. The browser obtains its ticket through Next, opens a credential-free socket, and sends `{v:1,type:"auth",payload:{ticket}}` as its first frame. Upgrade Origin must equal `FRONTEND_ORIGIN`; authentication must complete within 5 seconds. Tickets are session/origin-bound and consumed once. Frames are limited to 64 KiB; message text is limited to 4000 characters. Session validity is checked on commands/heartbeat and membership before send/broadcast.
-
-Protocol events: `ready`, client `message.send`, committed `message.accepted`, participant `message.created`, `conversation.updated`, ping/pong and request-correlated `error`. A send carries `request_id`, `conversation_id`, and `payload:{client_message_id,body}`. Server identity, IDs and timestamps come from the session/database. Seed statuses are derived from stored receipts; no live read/delivered updates are fabricated.
-
-REST and WS use the same short `BEGIN IMMEDIATE` transaction. It inserts one row per `(sender_id, client_message_id)`, captures the other direct member's receipt, increments activity/version and commits before acknowledgment/broadcast. Same-ID/same-content retries return the row; changed text/conversation conflicts. New thread creation also invalidates both members' connected lists. Every participant socket, including the sender's other tabs, receives committed events.
-
-The client keeps a pending UUID/draft for retry, merges by server ID/UUID, and falls back to REST after a missing socket acknowledgment. Reconnect delay grows from 0.5 seconds to a 30-second cap. Ready/reconnect/tab resume fetch authorized durable list/history again. Broadcasts and tickets are in memory, so restart loses them; SQLite reconciliation restores missed state. There is no guarantee that an in-memory broadcast alone reaches a disconnected client. Run one backend worker/replica.
-
-## SQLite schema, migration and seed
-
-Revision **0001** is the initial Alembic migration. The application's schema strategy does not use ORM `create_all`. Eight tables (plus Alembic's revision table):
-
-| Table | Purpose |
+| Method / path (below either prefix) | Purpose / request |
 |---|---|
-| users | Unique normalized identity and bounded display name/avatar |
-| auth_challenges | One-use purpose, expiry, persisted attempt count |
-| sessions | Hashed credentials and durable expiry/revocation |
-| contacts | Directional unique address-book pairs; no self-contact |
-| conversations | Direct/group metadata; canonical low/high direct pair UNIQUE |
-| conversation_members | Composite conversation/user identity, roles and removal state |
-| messages | AUTOINCREMENT ordering, stable UUID deduplication per sender, composite membership FK |
-| message_receipts | Send-time recipient identities; composite message/member FKs, delivered/read state |
+| GET `/health/live` | Public liveness; deterministic non-sensitive response |
+| POST `/auth/challenges` | `username`, `purpose` register/login |
+| POST `/auth/register` | `challenge_id`, demo `otp`, `display_name`, `avatar_key` |
+| POST `/auth/login`; GET `/auth/me`; POST `/auth/logout` | Persisted session lifecycle; logout JSON `{}` |
+| PATCH `/users/me` | Own display name/preset avatar API; profile editing UI deferred |
+| GET `/users?query=...` | Bounded authenticated public demo directory |
+| GET/POST `/contacts` | Own directional contacts; POST `user_id` |
+| GET `/conversations?query&filter&cursor` | Active memberships, recent order, previews/unread; `all`/`unread` |
+| POST `/conversations/direct` | `user_id`; idempotent canonical user pair |
+| POST `/conversations/groups` | `name`, `user_ids`; creator becomes admin |
+| GET/PATCH `/conversations/{id}` | Member detail / admin group rename with `name` |
+| GET/POST `/conversations/{id}/members` | Member list / admin add with `user_ids` |
+| DELETE `/conversations/{id}/members/{user_id}` | Admin removal; Next request sends JSON `{}` |
+| GET `/conversations/{id}/messages` | History: `limit` 1–100, mutually exclusive `before_id`/`after_id` |
+| POST `/conversations/{id}/messages` | Direct/group text: stable `client_message_id` UUID, nonblank `body` ≤4000 characters |
+| POST `/conversations/{id}/delivered`, `/read` | `message_ids`, 1–100; authenticated user's eligible original receipts only |
+| POST `/auth/ws-ticket` | Session/CSRF-protected one-use ticket, 30 seconds |
 
-See [approved schema and indexes](docs/DATABASE_DESIGN.md) and [architecture](docs/ARCHITECTURE.md). SQL enforces the documented table CHECK/UNIQUE/FK relationships and UUID shape. Phase 4's transaction services enforce canonical direct creation with two members, active sender membership, UUID replay rules and direct recipient receipt creation. Group final-admin/cohort rules and live acknowledgment chronology remain Phase 5. No Phase 4 migration or developer database reset was needed.
+Username onboarding uses a five-minute, single-use challenge with at most five incorrect OTP attempts. Server rate limiting is process-local and shared behind the gateway; it is deliberately simple demo protection. Opaque session tokens are hashed in SQLite. The gateway stores the raw token only in a host-only HttpOnly, SameSite=Lax cookie, Secure on HTTPS, with seven-day expiry. Browser storage and URLs contain no long-lived session credential. Logout revokes that session and its sockets; independent sessions remain signed in.
 
-Each SQLite connection enables foreign keys, **WAL**, and a **5-second busy timeout**. Each request/seed gets its own short-lived SQLAlchemy session. Synchronous DB routes execute in FastAPI's thread pool. Keep **one FastAPI worker**. `DATABASE_PATH` defaults to `backend/data/signal.sqlite3`; relative paths resolve against `backend/`, while absolute Windows paths or later volume paths (e.g. `/data/signal.sqlite3`) work. Parent directories are created without resetting files.
+WS `/v1/ws` requires exact Origin and first-frame `{v:1,type:"auth",payload:{ticket}}` within five seconds. Version-1 events: `ready`, `message.send`, `message.accepted`, `message.created`, `conversation.updated`, `membership.removed`, `receipt.updated`, `typing.set`, `typing.changed`, `ping`/`pong`, and correlated `error`. `message.send` carries `conversation_id` plus payload `client_message_id, body`; `typing.set` carries the conversation and payload `{typing:boolean}`. Sender identity and timestamps come from the server. Receipt commands use REST; receipt changes arrive over WS. Public messages include original `recipient_ids`, `delivered_ids`, `read_ids` and aggregate `status`.
 
-Explicit commands in `backend/`:
+REST and WS use the same send transaction. SQLite `BEGIN IMMEDIATE` serializes membership/send/ack writes. A single-process mutation lock covers commit plus publication, with fresh authorization for each recipient and bounded socket writes. Authentication reads release their connection before waiting for this lock; socket database checks run in a threadpool. This avoids holding all pool connections during concurrent acknowledgment bursts. **One backend worker and one replica are required.**
+
+The client merges by server ID/client UUID, retains monotonic receipt progress, and retries a failed send with the same UUID. Reconnect, foreground return and a 30-second visible-page repair refresh lists and selected loaded history, paging through missed messages/older receipts. Pending drafts survive retries in memory, not a full browser restart. Socket events are not a durable event log; REST repairs missed publication.
+
+## Database and seed
+
+The unchanged Alembic revision is **0001**; Phase 5 needs no schema migration. Eight tables:
+
+| Table | Purpose / key constraints |
+|---|---|
+| `users` | Unique normalized username and original preset avatar |
+| `auth_challenges` | OTP challenge expiry, attempts, consumption |
+| `sessions` | Hashed opaque token, CSRF, expiry, revocation |
+| `contacts` | Directional owner/contact composite key, no self-contact |
+| `conversations` | Direct canonical low/high unique pair or named group; activity/version |
+| `conversation_members` | Conversation/user composite key, role, join/removal time |
+| `messages` | Member sender FK, unique sender/client UUID, stable autoincrement history ID |
+| `message_receipts` | Message/recipient composite key and matching conversation FKs; read implies delivered |
+
+Foreign keys, WAL, and a five-second busy timeout apply on every connection. Membership/activity/history/unread indexes support access patterns. See [schema rationale](docs/DATABASE_DESIGN.md); actual models are `backend/app/models.py`.
+
+Explicit `python -m app.seed` adds fictitious Alice/Bob/Carol/Dave accounts, six contacts, three conversations, seven memberships, six messages and eight illustrative receipt rows to a fresh migrated database. Seed IDs/UUIDs are stable; rerunning inserts nothing and preserves edits, membership changes and acknowledgments. Collisions fail instead of resetting data. Dave starts outside Weekend Plans; Alice is its admin. Never reset or automatically reseed the hosted database.
+
+## Tests and local evidence
 
 ```powershell
-.\.venv\Scripts\python.exe -m alembic upgrade head
-.\.venv\Scripts\python.exe -m alembic current
-.\.venv\Scripts\python.exe -m app.seed
-.\.venv\Scripts\python.exe -m app.seed
+# frontend/
+npm run lint
+npm run typecheck
+npm run build
+npx playwright test
+
+# backend/
+.\.venv\Scripts\python.exe -m pytest
+.\.venv\Scripts\python.exe -m pip check
 ```
 
-Fresh seed: **4 users, 6 directional contacts, 3 conversations, 7 memberships, 6 messages, 8 receipts**. Alice/Bob and Alice/Carol direct threads; “Weekend Plans” has Alice/admin, Bob and Carol/member, with **Dave outside**. History includes sent-only, delivered/unread and read states; sending is ephemeral client state, not a persisted receipt. Seed accounts have distinct original avatars.
+Playwright starts real Next **3100** and FastAPI **8100**, explicitly migrates/seeds a new temporary SQLite file, and uses separate browser contexts. It refuses occupied test ports. Output defaults to OS temp `scaler-signal-playwright`; `PLAYWRIGHT_OUTPUT_DIR` can override it. Chromium/Windows are tested; Linux, Firefox and WebKit are not locally verified. No developer or production database is used. Backend tests exercise actual SQLite transactions, concurrent writes, authorization and WS events. Actual counts, intermediate failures and screenshots are recorded in [Phase 5 handoff](docs/PHASE_5_HANDOFF.md). The earlier [Phase 3 visual reference/QA](docs/PHASE_3_VISUAL_QA.md) remains the approved baseline.
 
-Stable reserved user/conversation IDs **900001–900004** and deterministic message UUIDs identify fixtures. Seeding is atomic, detects unrelated reserved identities, and inserts missing records without overwriting profiles, message edits, memberships or receipt progress. Second run inserts **zero** records. It is never automatic. A collision fails without resetting existing data; inspect it rather than delete the database. Take a restorable backup before any later deployed migration.
+## Deployment gate and limitations
 
-Approved future group conventions remain full history for active members, access denial after removal, and fixed send-time receipt cohorts. No group-admin actions or messaging APIs are exposed in Phase 2.
+Phase 5 commit/push and rollout to the existing Railway services are authorized. Preserve the existing SQLite volume and all production variables. The [Railway plan](docs/RAILWAY_DEPLOY_PLAN.md) and [current service configuration](docs/RAILWAY_DEPLOYMENT.md) remain applicable: roots `/frontend` and `/backend`, frontend `npm run start:production`, backend `python -m app.startup`, Railway `PORT`, one worker/replica, `/data/signal.sqlite3`. Startup validates the mounted volume and runs Alembic **after mount**, before serving; migration failure stops startup. Do not seed on startup.
 
-## Phase 2 verification record (8 October 2026)
+`BACKEND_BASE_URL` and the matching gateway key stay server-only. `NEXT_PUBLIC_WS_URL` is a credential-free WSS endpoint embedded during build. Exact HTTPS `FRONTEND_ORIGIN` must match both services. Budget remains $10/month with the existing hard limit unchanged; this rollout provisions no resources and changes no billing settings. Public verification must confirm the new release before declaring deployment complete.
 
-The following preserves historical Phase 2 results. Phase 3 passed **55 pytest and 16 Playwright** plus lint/typecheck/build; see [Phase 3 QA](docs/PHASE_3_VISUAL_QA.md). Current Phase 4 results are recorded in [Phase 4 handoff](docs/PHASE_4_HANDOFF.md).
-
-From `frontend/`: `npm run lint`, `npm run typecheck`, `npm run build`, `npx playwright test` (or `npm run test:e2e`).
-From `backend/`: `.venv\Scripts\python.exe -m pytest`, `.venv\Scripts\python.exe -m pip check`.
-
-| Check | Actual outcome |
-|---|---|
-| ESLint | Passed, zero warnings |
-| Strict TypeScript + Next route type generation | Passed |
-| Next production build | Passed |
-| pytest | **55 passed**, real temporary SQLite files |
-| pip check | No broken requirements |
-| Alembic upgrade/current/check | Revision **0001 (head)**; no new upgrade operations |
-| Seed rerun | Zero inserts; automated tests preserve profile/message/member/receipt edits |
-| Playwright | **10 passed**: five real-service checks at desktop 1280x800 and mobile 390x844; **2 targeted security reruns passed** after malformed-cookie/config guards |
-| Manual normal-port browser | Register fictitious account, reload persisted session, logout, login as Alice; passed |
-| Normal-port health | Direct 8000 and forwarded 3000 responses matched expected real JSON |
-| Browser installation | Existing Chromium 156.0.8078.4, revision 1248 used successfully; no new install needed |
-
-pytest covers actual FK/UNIQUE/CHECK enforcement, migration rerun, seed integrity/collisions, validation/OTP lifecycle, concurrent one-use consumption, persisted session hashes/app recreation/expiry/revocation, own-profile access, independent sessions, CSRF/origin and throttling. It never uses the developer DB.
-
-Playwright starts real FastAPI **8100** and Next **3100**, with an isolated `scaler-signal-e2e-*` temporary database that its test bootstrap explicitly migrates/seeds. Readiness polling is bounded; there are no mocked responses. Tests preserve desktop/mobile health coverage and verify onboarding, cookies/storage, seeded login, forbidden requests and two independent identities. Existing test-port services are not reused: occupied ports fail to protect fixture isolation. Run one suite at a time; avoid a concurrent normal Next dev server. The test temp directory remains under OS temp for inspection, not application storage. Screenshots/traces are under OS temp `scaler-signal-playwright`, overridable through `PLAYWRIGHT_OUTPUT_DIR`.
-
-Initial Phase 2 failures were fixed: Alembic needed `path_separator=os` under warnings-as-errors; the browser error locator needed to distinguish the app alert from Next's route announcer; screenshot capture now waits for demonstrated UI interaction before modifying input caret styles. The seed was corrected to keep Dave outside the group before handoff. The final browser run had only harmless terminal NO_COLOR/FORCE_COLOR warnings. No checks were skipped or warnings disabled.
-
-HTTPS cookie behavior is implemented but a deployed TLS environment is not tested. Chromium/Windows are verified; Firefox/WebKit/POSIX are not. Phase 1 previously passed 4 backend/4 browser tests; their meaningful health/settings coverage remains.
-
-## Source files
-
-```text
-README.md, .gitignore, .nvmrc, .python-version
-AGENTS.md, assignment PDF, docs/              preserved requirements/design/approval
-backend/
-  .env.example, requirements.in, requirements.txt, pyproject.toml
-  alembic.ini
-  alembic/env.py, script.py.mako, versions/0001_initial_relational_schema.py
-  app/__init__.py, __main__.py, main.py, settings.py
-  app/database.py, models.py, auth.py, seed.py, configure_local.py
-  app/routes/__init__.py, health.py, auth.py, conversations.py, socket.py
-  app/realtime.py, services/direct.py
-  tests/conftest.py, test_health.py, test_settings.py
-  tests/test_database.py, test_auth.py, test_seed_collisions.py, test_direct_phase4.py, e2e_server.py
-frontend/
-  AGENTS.md, .env.example, package.json, package-lock.json
-  tsconfig.json, next-env.d.ts, eslint.config.mjs, playwright.config.ts
-  app/layout.tsx, page.tsx, globals.css, onboarding.tsx
-  app/messenger/{types,fixtures,icons,primitives,sidebar,chat-pane,dialogs,messenger,use-chat-data}
-  next.config.ts
-  app/api/health/live/route.ts
-  app/api/auth/{challenges,register,login,me,logout,ws-ticket}/route.ts
-  app/api/users/route.ts, users/me/route.ts, contacts/route.ts
-  app/api/conversations/route.ts, direct/route.ts, [id]/route.ts, [id]/messages/route.ts
-  lib/backend.ts, auth-gateway.ts, chat-gateway.ts
-  public/avatars/{sky,fern,sun,clay}.svg
-  tests/scaffold.spec.ts, auth.spec.ts, messenger.spec.ts
-```
-
-Local `.env`, SQLite files, venvs, dependencies, builds, caches and test captures are ignored. There is no Git repository initialized, commit, push, deployment or paid resource.
-
-## Next gate
-
-Phase 3 Windows/light and documented reference approximations were [approved](docs/PHASE_3_APPROVAL.md). Phase 4 validation passed on 9 October 2026 and awaits user acceptance. The next proposed phase is group management/sending, typing and real delivery/read acknowledgment behavior. Do not begin it without explicit instruction.
-
-Groups/typing/receipts are Phase 5; integration/visual QA Phase 6; final README/deployment/E2E Phase 7. Railway's paid plan is available, but provisioning, public-repository creation/push and deployment still need approval. No optional features before mandatory features pass.
-
-Railway preflight: [deployment plan](docs/RAILWAY_DEPLOY_PLAN.md). Use service roots `/frontend` and `/backend`, frontend `npm run start:production`, backend `python -m app.startup`. Both bind `0.0.0.0` using `PORT`. Backend startup requires an explicit absolute `DATABASE_PATH`, existing storage directory, frontend Origin and gateway key; on Railway it requires the `/data` volume and `/data/signal.sqlite3`, then runs Alembic before starting one worker. Migration failure prevents server startup. Seeding remains an explicit action and never runs at startup. Keep one backend replica.
-
-Both services require the same private gateway key and exact HTTPS frontend Origin. Set frontend build-time `NEXT_PUBLIC_WS_URL=wss://<BACKEND_DOMAIN>/v1/ws` and server-only `BACKEND_BASE_URL=https://<BACKEND_DOMAIN>`. A rebuild is required after changing the public WS URL. Local production-mode migration, two-user messaging and restart persistence passed against a throwaway DB; actual Railway provisioning, TLS/WSS and volume persistence across redeploy await separate approval. No developer DB will be uploaded.
+Calls, stories, linked devices and privacy/notification/appearance preferences remain labeled placeholders. Presence is mocked. Attachments, reactions, quoted replies, dark mode and disappearing messages are deferred. No real encryption is claimed. Phase 6 integration/pixel QA and Phase 7 final submission remain separately gated; do not submit automatically.

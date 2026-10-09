@@ -9,7 +9,7 @@ from typing import Annotated, Iterator
 
 from fastapi import Depends, Request
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, object_session
 
 from app.models import AuthSession, User
 
@@ -92,6 +92,13 @@ Actor = Annotated[Identity, Depends(authenticated_identity)]
 def require_csrf(request: Request, identity: Identity) -> None:
     if not secrets.compare_digest(identity.session.csrf_token, request.headers.get("x-csrf-token", "")):
         raise APIError(403, "CSRF", "Refresh the page and try again.")
+
+
+def release_identity_connection(identity: Identity) -> None:
+    """Mutation handlers use their own transaction; do not hold a pool slot awaiting a lock."""
+    db = object_session(identity.user)
+    if db is not None:
+        db.close()  # Loaded identity fields remain readable on the detached objects.
 
 
 def revoke_session(db: Session, session_id: str) -> None:

@@ -10,6 +10,8 @@ type Props = {
   onClose: () => void; onOpen: (kind: DialogState) => void; onSelect: (id: string) => void; onLogout: () => void; busy: boolean;
   contacts: ApiUser[]; directory: (term: string) => Promise<ApiUser[]>; addContact: (userId: number) => Promise<void>;
   startDirect: (userId: number) => Promise<string>;
+  createGroup: (name: string, userIds: number[]) => Promise<string>;
+  changeGroup: (id: string, action: "rename" | "add" | "remove", value: string | number[]) => Promise<void>;
 };
 
 function NewContact({ directory, addContact }: Pick<Props, "directory" | "addContact">) {
@@ -41,22 +43,24 @@ function NewContact({ directory, addContact }: Pick<Props, "directory" | "addCon
     <div className="dialog-footer"><button className="primary-button" type="submit" disabled={busy}>Add contact</button></div>
   </form>;
 }
-function NewGroup({ data, profile }: { data: MessengerData; profile: Profile }) {
+function NewGroup({ data, profile, createGroup, onSelect, onClose }: Pick<Props, "data" | "profile" | "createGroup" | "onSelect" | "onClose">) {
   const [name, setName] = useState("");
   const [members, setMembers] = useState<string[]>([]);
   const [notice, setNotice] = useState("");
   const [invalid, setInvalid] = useState(false);
-  function submit(event: FormEvent) {
+  async function submit(event: FormEvent) {
     event.preventDefault();
     const valid = name.trim().length > 0 && members.length > 0;
     setInvalid(!valid);
-    setNotice(valid ? "Group creation will be available in Phase 5. No group was created." : "Enter a group name and choose at least one member.");
+    if (!valid) { setNotice("Enter a group name and choose at least one member."); return; }
+    try { onSelect(await createGroup(name, members.map(Number))); onClose(); }
+    catch (error) { setInvalid(true); setNotice(error instanceof Error ? error.message : "Could not create group."); }
   }
   return <form className="dialog-form" onSubmit={submit}>
     <div className="group-form-avatar"><Avatar avatar="group" name="New group" size={72} /></div>
     <label htmlFor="group-name">Group name</label><input id="group-name" value={name} onChange={event => setName(event.target.value)} placeholder="Name your group" maxLength={100} required />
     <fieldset className="member-picker"><legend>Choose members</legend>{Object.values(data.people).filter(person => person.id !== String(profile.id)).map(person => <label key={person.id}><Avatar avatar={person.avatar} name={person.name} size={36} /><span>{person.name}<small>@{person.username}</small></span><input type="checkbox" checked={members.includes(person.id)} onChange={event => setMembers(event.target.checked ? [...members, person.id] : members.filter(id => id !== person.id))} /></label>)}</fieldset>
-    <p className="preview-note">Group creation is available in Phase 5. This form does not save.</p>
+
     {notice && <p className={invalid ? "error" : "inline-notice"} role={invalid ? "alert" : "status"}>{notice}</p>}
     <div className="dialog-footer"><button className="primary-button" type="submit">Create group</button></div>
   </form>;
@@ -74,8 +78,8 @@ function Settings({ profile, onLogout, busy }: Pick<Props, "profile" | "onLogout
         <button className="secondary-button logout-button" onClick={onLogout} disabled={busy}><Icon name="logout" size={18} />{busy ? "Logging out…" : "Log out"}</button>
       </> : <>
         <p className="preview-note">Settings preview. These controls are not connected.</p>
-        {category === "Privacy" && <><Setting label="Read receipts" detail="Live acknowledgments arrive in Phase 5" /><Setting label="Typing indicators" detail="Available in Phase 5" /><p className="privacy-note"><Icon name="shield" size={18} />This assignment demo does not implement end-to-end encryption.</p></>}
-        {category === "Notifications" && <><Setting label="Message notifications" detail="Notification delivery is not connected" checked /><Setting label="Play notification sounds" detail="No sounds are played in this preview" /><div className="settings-row"><span>Show in notifications<small>Name and message</small></span><Icon name="chevron" size={18} /></div></>}
+        {category === "Privacy" && <><Setting label="Read receipts" detail="Enabled for this demo; preference is a placeholder" /><Setting label="Typing indicators" detail="Enabled for this demo; preference is a placeholder" /><p className="privacy-note"><Icon name="shield" size={18} />This assignment demo does not implement end-to-end encryption.</p></>}
+        {category === "Notifications" && <><Setting label="Message notifications" detail="In-app incoming-message toasts are enabled" checked /><Setting label="Play notification sounds" detail="No sounds are played in this preview" /><div className="settings-row"><span>Show in notifications<small>Name and message</small></span><Icon name="chevron" size={18} /></div></>}
         {category === "Appearance" && <><div className="settings-row"><span>Theme<small>Light</small></span><span className="theme-swatch" /></div><p>Light theme is the approved desktop reference. Dark mode is deferred.</p><div className="settings-row"><span>Chat color<small>Blue</small></span><span className="color-swatch" /></div></>}
       </>}
     </section>
@@ -86,10 +90,10 @@ function Setting({ label, detail, checked = false }: { label: string; detail: st
 }
 function ChatSearch({ data, conversation }: { data: MessengerData; conversation?: Conversation }) {
   const [query, setQuery] = useState("");
-  const results = (conversation ? data.messages[conversation.id] : []).filter(message => query.trim() && message.body.toLowerCase().includes(query.trim().toLowerCase()));
+  const results = (conversation ? data.messages[conversation.id] ?? [] : []).filter(message => query.trim() && message.body.toLowerCase().includes(query.trim().toLowerCase()));
   return <div className="dialog-form"><label htmlFor="search-messages">Search loaded messages</label><input id="search-messages" type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Search in this conversation" />
     <p className="muted">{query ? results.length + " loaded results" : "Type to search loaded history."}</p>
-    <div className="search-results">{results.map(message => <article key={message.id}><strong>{data.people[message.sender].name}</strong><time>{message.date} · {message.time}</time><p>{message.body}</p></article>)}</div>
+    <div className="search-results">{results.map(message => <article key={message.id}><strong>{data.people[message.sender]?.name ?? "Member"}</strong><time>{message.date} · {message.time}</time><p>{message.body}</p></article>)}</div>
     {query && results.length === 0 && <p>No matching messages.</p>}</div>;
 }
 
@@ -118,20 +122,46 @@ function NewChat({ contacts, directory, startDirect, onSelect, onClose, onOpen }
     {notice && <p className="error" role="alert">{notice}</p>}</div>;
 }
 
+function GroupDetails({ conversation, data, profile, changeGroup, directory }: Pick<Props, "data" | "profile" | "changeGroup" | "directory"> & { conversation: Conversation }) {
+  const [name, setName] = useState(conversation.name);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<ApiUser[]>([]);
+  const [notice, setNotice] = useState("");
+  const [busy, setBusy] = useState(false);
+  const admin = conversation.memberRoles?.[profile.id] === "admin";
+  useEffect(() => {
+    let active = true;
+    const timer = setTimeout(() => { if (query.trim()) void directory(query).then(users => { if (active) setResults(users); }).catch(error => { if (active) setNotice(error.message); }); }, 200);
+    return () => { active = false; clearTimeout(timer); };
+  }, [query, directory]);
+  async function change(action: "rename" | "add" | "remove", value: string | number[]) {
+    setBusy(true); setNotice("");
+    try { await changeGroup(conversation.id, action, value); setNotice("Group updated."); }
+    catch (error) { setNotice(error instanceof Error ? error.message : "Could not update group."); }
+    finally { setBusy(false); }
+  }
+  return <div className="group-details"><div className="details-hero"><Avatar avatar="group" name={conversation.name} size={88} /><h3>{conversation.name}</h3><p>{conversation.members.length} members · saved group</p></div>
+    {admin && <div className="dialog-form"><form className="dialog-form" onSubmit={event => { event.preventDefault(); void change("rename", name); }}><label htmlFor="rename-group">Group name</label><input id="rename-group" value={name} onChange={event => setName(event.target.value)} required maxLength={100} /><button className="secondary-button" disabled={busy}>Rename group</button></form>
+      <label htmlFor="add-member">Add members</label><input id="add-member" placeholder="Search username" value={query} onChange={event => setQuery(event.target.value)} />
+      {query.trim() && results.filter(person => !conversation.members.includes(String(person.id))).map(person => <button key={person.id} className="secondary-button" disabled={busy} onClick={() => { void change("add", [person.id]); }}>Add {person.display_name}</button>)}
+    </div>}
+    {!admin && <p className="preview-note">Only admins can change this group.</p>}
+    {notice && <p role="status">{notice}</p>}
+    <h4>Members</h4>{conversation.members.map(id => <div className="member-row" key={id}><Avatar avatar={data.people[id]?.avatar ?? "sky"} name={data.people[id]?.name ?? "Member"} size={40} /><span>{data.people[id]?.name ?? "Member"}<small>{conversation.memberRoles?.[id] === "admin" ? "Admin" : "Member"}</small></span>{admin && <button className="text-button" disabled={busy} onClick={() => { void change("remove", id); }} aria-label={"Remove " + (data.people[id]?.name ?? "Member")}>Remove</button>}</div>)}</div>;
+}
+
 export function MessengerDialog(props: Props) {
   const { kind, onClose, onOpen, data, profile, conversation, onSelect } = props;
   const titles: Record<Exclude<DialogState, null>, string> = { "new-chat": "New message", "new-contact": "New contact", "new-group": "New group", settings: "Settings", members: "Group details", contact: "Contact details", "search-chat": "Search conversation", about: "About this preview", Calls: "Calls", Stories: "Stories" };
   return <Dialog key={kind} title={titles[kind]} onClose={onClose} wide={kind === "settings"} side={kind === "members"}>
     {kind === "new-chat" && <NewChat contacts={props.contacts} directory={props.directory} startDirect={props.startDirect} onSelect={onSelect} onClose={onClose} onOpen={onOpen} />}
     {kind === "new-contact" && <NewContact directory={props.directory} addContact={props.addContact} />}
-    {kind === "new-group" && <NewGroup data={data} profile={profile} />}
+    {kind === "new-group" && <NewGroup data={data} profile={profile} createGroup={props.createGroup} onSelect={onSelect} onClose={onClose} />}
     {kind === "settings" && <Settings profile={profile} onLogout={props.onLogout} busy={props.busy} />}
     {kind === "search-chat" && <ChatSearch data={data} conversation={conversation} />}
-    {kind === "members" && conversation && <div className="group-details"><div className="details-hero"><Avatar avatar="group" name={conversation.name} size={88} /><h3>{conversation.name}</h3><p>{conversation.members.length} members · saved group</p></div>
-      <p className="preview-note">Group changes are available in Phase 5.</p><button className="secondary-button full-width" disabled><Icon name="plus" size={18} />Add members</button>
-      <h4>Members</h4>{conversation.members.map(id => <div className="member-row" key={id}><Avatar avatar={data.people[id]?.avatar ?? "sky"} name={data.people[id]?.name ?? "Member"} size={40} /><span>{data.people[id]?.name ?? "Member"}<small>{conversation.memberRoles?.[id] === "admin" ? "Admin" : "Member"}</small></span>{conversation.memberRoles?.[id] !== "admin" && <button className="text-button" disabled aria-label={"Remove " + (data.people[id]?.name ?? "Member")}>Remove</button>}</div>)}</div>}
+    {kind === "members" && conversation && <GroupDetails conversation={conversation} data={data} profile={profile} changeGroup={props.changeGroup} directory={props.directory} />}
     {kind === "contact" && conversation && <div className="details-hero"><Avatar avatar={conversation.avatar} name={conversation.name} size={88} /><h3>{conversation.name}</h3><p>@{conversation.members.map(id => data.people[id]).find(person => person?.id !== String(profile.id))?.username ?? "contact"}</p><p className="preview-note">Last seen recently is a mocked demo status.</p></div>}
-    {kind === "about" && <div className="about-preview"><Icon name="chat" size={44} /><h3>Your conversations</h3><p>Contacts, conversations and direct messages come from your signed-in account and SQLite. “Sent” means saved. Delivery and read acknowledgments, typing, group sending and group changes arrive in Phase 5.</p><p>Presence is mocked. No real end-to-end encryption is implemented.</p></div>}
+    {kind === "about" && <div className="about-preview"><Icon name="chat" size={44} /><h3>Your conversations</h3><p>Direct and group messages are saved in SQLite. Sent means saved, delivered means acknowledged by recipients, and read means displayed in their visible chat. Group admins manage membership; typing is temporary.</p><p>Presence is mocked. No real end-to-end encryption is implemented.</p></div>}
     {(kind === "Calls" || kind === "Stories") && <div className="coming-soon"><Icon name={kind === "Calls" ? "phone" : "stories"} size={48} /><h3>{kind} are coming soon</h3><p>This section is a placeholder for the assignment.</p></div>}
   </Dialog>;
 }
