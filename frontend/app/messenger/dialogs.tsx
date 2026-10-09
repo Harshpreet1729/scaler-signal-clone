@@ -4,7 +4,7 @@ import { Avatar, Dialog } from "./primitives";
 import type { Conversation, MessengerData, Profile } from "./types";
 import type { ApiUser } from "./use-chat-data";
 
-export type DialogState = "new-contact" | "new-group" | "members" | "contact" | "search-chat" | "about" | "Calls" | "Stories" | null;
+export type DialogState = "new-contact" | "new-group" | "members" | "contact" | "about" | "Calls" | "Stories" | null;
 type Props = {
   kind: Exclude<DialogState, null>; profile: Profile; data: MessengerData; conversation?: Conversation;
   onClose: () => void; onOpen: (kind: DialogState) => void; onSelect: (id: string) => void; onLogout: () => void; busy: boolean;
@@ -65,15 +65,6 @@ function NewGroup({ data, profile, createGroup, onSelect, onClose }: Pick<Props,
     <div className="dialog-footer"><button className="primary-button" type="submit">Create group</button></div>
   </form>;
 }
-function ChatSearch({ data, conversation }: { data: MessengerData; conversation?: Conversation }) {
-  const [query, setQuery] = useState("");
-  const results = (conversation ? data.messages[conversation.id] ?? [] : []).filter(message => query.trim() && message.body.toLowerCase().includes(query.trim().toLowerCase()));
-  return <div className="dialog-form"><label htmlFor="search-messages">Search loaded messages</label><input id="search-messages" type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Search in this conversation" />
-    <p className="muted">{query ? results.length + " loaded results" : "Type to search loaded history."}</p>
-    <div className="search-results">{results.map(message => <article key={message.id}><strong>{data.people[message.sender]?.name ?? "Member"}</strong><time>{message.date} · {message.time}</time><p>{message.body}</p></article>)}</div>
-    {query && results.length === 0 && <p>No matching messages.</p>}</div>;
-}
-
 function GroupDetails({ conversation, data, profile, changeGroup, directory }: Pick<Props, "data" | "profile" | "changeGroup" | "directory"> & { conversation: Conversation }) {
   const [name, setName] = useState(conversation.name);
   const [query, setQuery] = useState("");
@@ -104,11 +95,10 @@ function GroupDetails({ conversation, data, profile, changeGroup, directory }: P
 
 export function MessengerDialog(props: Props) {
   const { kind, onClose, data, profile, conversation, onSelect } = props;
-  const titles: Record<Exclude<DialogState, null>, string> = { "new-contact": "New contact", "new-group": "New group", members: "Group details", contact: "Contact details", "search-chat": "Search conversation", about: "About this preview", Calls: "Calls", Stories: "Stories" };
+  const titles: Record<Exclude<DialogState, null>, string> = { "new-contact": "New contact", "new-group": "New group", members: "Group details", contact: "Contact details", about: "About this preview", Calls: "Calls", Stories: "Stories" };
   return <Dialog key={kind} title={titles[kind]} onClose={onClose} side={kind === "members"}>
     {kind === "new-contact" && <NewContact directory={props.directory} addContact={props.addContact} />}
     {kind === "new-group" && <NewGroup data={data} profile={profile} createGroup={props.createGroup} onSelect={onSelect} onClose={onClose} />}
-    {kind === "search-chat" && <ChatSearch data={data} conversation={conversation} />}
     {kind === "members" && conversation && <GroupDetails conversation={conversation} data={data} profile={profile} changeGroup={props.changeGroup} directory={props.directory} />}
     {kind === "contact" && conversation && <div className="details-hero"><Avatar avatar={conversation.avatar} name={conversation.name} size={88} /><h3>{conversation.name}</h3><p>@{conversation.members.map(id => data.people[id]).find(person => person?.id !== String(profile.id))?.username ?? "contact"}</p><p className="preview-note">Last seen recently is a mocked demo status.</p></div>}
     {kind === "about" && <div className="about-preview"><Icon name="chat" size={44} /><h3>Your conversations</h3><p>Direct and group messages are saved in SQLite. Sent means saved, delivered means acknowledged by recipients, and read means displayed in their visible chat. Group admins manage membership; typing is temporary.</p><p>Presence is mocked. No real end-to-end encryption is implemented.</p></div>}

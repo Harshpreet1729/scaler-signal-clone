@@ -51,7 +51,9 @@ test("icon geometry and selected states survive desktop and mobile workflows", a
   await page.getByRole("button", { name: "Close dialog" }).click();
   await page.getByRole("button", { name: "Search this conversation" }).click();
   await expect(page.getByLabel("Search loaded messages")).toBeVisible();
-  await page.getByRole("button", { name: "Close dialog" }).click();
+  await expect(page.getByLabel("Search loaded messages")).toBeFocused();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await page.getByRole("button", { name: "Remove conversation search" }).click();
   const metrics = await page.locator("svg[data-icon]").evaluateAll(elements => elements.filter(el => el.getClientRects().length).map(el => {
     const svg = el as SVGSVGElement, drawing = svg.getBBox(), rect = svg.getBoundingClientRect();
     return { name: svg.dataset.icon, aspect: rect.width / rect.height, x: drawing.x, y: drawing.y, right: drawing.x + drawing.width, bottom: drawing.y + drawing.height };

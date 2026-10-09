@@ -110,10 +110,11 @@ test("chat menus, loaded search, settings and placeholder dialogs retain keyboar
   await page.getByRole("button", { name: /Bob Patel/ }).first().click();
   await page.getByRole("button", { name: "Search this conversation" }).click();
   await page.getByLabel("Search loaded messages").fill("see you");
-  await expect(page.locator(".search-results article")).toHaveCount(0);
+  await expect(page.locator(".message-search-result")).toHaveCount(0);
   releaseHistory();
-  await expect(page.locator(".search-results article")).toHaveCount(1);
-  await page.getByRole("button", { name: "Close dialog" }).click();
+  await expect(page.locator(".message-search-result")).toHaveCount(1);
+  await page.getByRole("button", { name: "Remove conversation search" }).click();
+  if (await page.getByRole("button", { name: "Return to conversation" }).isVisible()) await page.getByRole("button", { name: "Return to conversation" }).click();
   await page.getByRole("button", { name: "Chat menu", exact: true }).click();
   await expect(page.getByRole("menuitem", { name: "Contact details" })).toBeFocused();
   await page.keyboard.press("ArrowDown");

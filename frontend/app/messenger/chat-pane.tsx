@@ -43,7 +43,7 @@ function MessageBubble({ message, previous, next, person, isGroup, userId, onRea
   const startsGroup = previous?.sender !== message.sender || previous?.date !== message.date;
   const endsGroup = next?.sender !== message.sender || next?.date !== message.date;
   const outgoing = message.direction === "outgoing";
-  return <div data-message-id={message.id} data-unread={message.unread ? "true" : undefined} className={"message-row " + message.direction + (startsGroup ? " group-start" : "") + (endsGroup ? " group-end" : "")}>
+  return <div tabIndex={-1} data-message-id={message.id} data-unread={message.unread ? "true" : undefined} className={"message-row " + message.direction + (startsGroup ? " group-start" : "") + (endsGroup ? " group-end" : "")}>
     {!outgoing && isGroup && <span className={"sender-avatar " + (!endsGroup ? "avatar-spacer" : "")}><Avatar avatar={person.avatar} name={person.name} size={28} /></span>}
     <div className="message-stack"><div className="message-bubble">
       {!outgoing && isGroup && startsGroup && <span className="sender-name" style={{ color: person.color }}>{person.name}</span>}
@@ -52,7 +52,7 @@ function MessageBubble({ message, previous, next, person, isGroup, userId, onRea
   </div>;
 }
 
-export function ChatPane({ active = true, conversation, messages, people, userId, onReact, onBack, onDetails, onSearch, onMenu, onUnavailable, onNew, onSend, onLoadOlder, hasOlder, onRead, onTyping, typingNames }: {
+export function ChatPane({ active = true, conversation, messages, people, userId, onReact, onBack, onDetails, onSearch, onMenu, onUnavailable, onNew, onSend, onLoadOlder, hasOlder, onRead, onTyping, typingNames, messageTarget }: {
   active?: boolean;
   conversation?: Conversation; messages: readonly ChatMessage[]; people: Readonly<Record<string, Person>>;
   userId: number; onReact: ReactToMessage;
@@ -60,6 +60,7 @@ export function ChatPane({ active = true, conversation, messages, people, userId
   onTyping: (id: string, value: boolean) => void; typingNames: string[];
   onRead: (id: string, ids: number[], read: boolean) => Promise<void>;
   onLoadOlder?: () => Promise<void>; hasOlder?: boolean;
+  messageTarget?: { messageId: string; sequence: number } | null;
 }) {
   const history = useRef<HTMLDivElement>(null);
   const firstMessageId = messages[0]?.id;
@@ -74,6 +75,16 @@ export function ChatPane({ active = true, conversation, messages, people, userId
     if (prepended || previous.conversationId !== conversation?.id) requestedEarlierPage.current = undefined;
     previousHistory.current = { conversationId: conversation?.id, firstMessageId, count: messages.length };
   }, [active, conversation?.id, firstMessageId, messages.length]);
+  useEffect(() => {
+    if (!active || !messageTarget) return;
+    const target = Array.from(history.current?.querySelectorAll<HTMLElement>("[data-message-id]") ?? []).find(row => row.dataset.messageId === messageTarget.messageId);
+    if (!target) return;
+    target.scrollIntoView({ block: "center" });
+    target.focus({ preventScroll: true });
+    target.classList.add("search-match");
+    const timer = setTimeout(() => target.classList.remove("search-match"), 2500);
+    return () => { clearTimeout(timer); target.classList.remove("search-match"); };
+  }, [active, conversation?.id, messageTarget]);
   useEffect(() => {
     const root = history.current;
     if (!active || !root || !conversation) return;
