@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
-export type IconName = "menu" | "chat" | "phone" | "video" | "stories" | "settings" | "compose" | "more" | "search" | "filter" | "close" | "back" | "plus" | "send" | "smile" | "paperclip" | "group" | "bell" | "shield" | "sun" | "chevron" | "logout" | "check";
+export type IconName = "menu" | "chat" | "phone" | "video" | "stories" | "settings" | "compose" | "more" | "search" | "filter" | "close" | "back" | "plus" | "send" | "smile" | "paperclip" | "group" | "bell" | "shield" | "sun" | "chevron" | "logout" | "check" | "user" | "at" | "lock" | "data" | "info" | "microphone";
 const paths: Record<IconName, ReactNode> = {
   menu: <path d="M5 6h14M5 12h14M5 18h14" />,
   chat: <path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 10 10 0 0 1-4-.8L3 21l1.8-5.5a9 9 0 0 1-.8-4A8.5 8.5 0 0 1 12.5 3a8.5 8.5 0 0 1 8.5 8.5Z" />,
   phone: <path d="m7 3-3 2c-2 4 7 15 12 15l4-3-4-4-3 2-4-4 2-3-4-5Z" />,
   video: <><rect x="3" y="5" width="12" height="14" rx="3" /><path d="m15 9 6-3v12l-6-3Z" /></>,
   stories: <><rect x="8" y="3" width="11" height="17" rx="3" /><path d="m5 7-2 1 2 12q.4 2 3 1" /></>,
-  settings: <><path d="m9 3 1-1h4l1 3 3 2 3 1v4l-2 2-1 3v3l-4 2-2-2-3-1-3 1-2-4 1-2-1-3-2-2 2-4 3 1Z" transform="translate(1 0) scale(.9)" /><circle cx="12" cy="12" r="3" /></>,
+  settings: <><path d="m9 3 1-2h4l1 2 2 1 2-.2 2 3-1 2v4l1 2-2 3-2-.2-2 1-1 2h-4l-1-2-2-1-2 .2-2-3 1-2V9L3 7l2-3 2 .2Z" /><circle cx="12" cy="11" r="3" /></>,
   compose: <><path d="M12 4H6a3 3 0 0 0-3 3v11a3 3 0 0 0 3 3h11a3 3 0 0 0 3-3v-6M14 3l3-1 5 5-2 3-9 8-5 1 1-5Z" /><path d="m14 4 5 5" /></>,
   more: <><circle cx="4" cy="12" r="1" fill="currentColor" /><circle cx="12" cy="12" r="1" fill="currentColor" /><circle cx="20" cy="12" r="1" fill="currentColor" /></>,
   search: <><circle cx="10" cy="10" r="6.5" /><path d="m15 15 6 6" /></>,
@@ -23,6 +23,12 @@ const paths: Record<IconName, ReactNode> = {
   sun: <><circle cx="12" cy="12" r="4" /><path d="M12 1v2M12 21v2M1 12h2M21 12h2M4 4l2 2M18 18l2 2M4 20l2-2M18 6l2-2" /></>,
   chevron: <path d="m9 5 7 7-7 7" />,
   logout: <><path d="M9 3H4v18h5M10 12h12m-5-5 5 5-5 5" /></>,
+  user: <><circle cx="12" cy="7" r="4" /><path d="M4 21v-2a8 8 0 0 1 16 0v2Z" /></>,
+  at: <><circle cx="11" cy="12" r="4" /><path d="M15 8v7q0 3 4 1 3-2 2-6A9 9 0 1 0 16 20" /></>,
+  lock: <><rect x="5" y="10" width="14" height="12" rx="2" /><path d="M8 10V6a4 4 0 0 1 8 0v4M12 15v3" /></>,
+  data: <><circle cx="12" cy="12" r="9" /><path d="M12 3v9l6 6M12 12l6-6" /></>,
+  info: <><circle cx="12" cy="12" r="9" /><path d="M12 11v6M12 7h.01" /></>,
+  microphone: <><rect x="9" y="2" width="6" height="13" rx="3" /><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8" /></>,
   check: <path d="m5 12 4 4L19 6" />,
 };
 /** Original path drawings; no copied Signal assets or icon dependency. */

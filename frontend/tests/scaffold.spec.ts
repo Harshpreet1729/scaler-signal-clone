@@ -8,9 +8,9 @@ test("signed-out page hides chats and health link reaches real FastAPI", async (
   });
 
   await page.goto("/");
-  await expect(page).toHaveTitle("Signal | Assignment preview");
+  await expect(page).toHaveTitle("Signal-inspired Messenger | Scaler Assignment");
   await expect(page.getByRole("heading", { level: 1, name: "Signal" })).toBeVisible();
-  await expect(page.getByRole("main", { name: "Messenger preview" })).toHaveCount(0);
+  await expect(page.getByRole("main", { name: "Messenger" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Create demo account" })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath("scaffold.png"), fullPage: true });

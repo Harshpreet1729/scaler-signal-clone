@@ -8,7 +8,7 @@ async function login(page: Page, username: string) {
   await page.getByLabel("Username", { exact: true }).fill(username);
   await page.getByLabel("Demo OTP", { exact: true }).fill("123456");
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
-  await expect(page.getByRole("button", { name: /^Profile:/ })).toBeVisible();
+  await expect(page.getByRole("main", { name: "Messenger", exact: true })).toHaveAttribute("data-username", username);
 }
 
 test("register, wrong OTP recovery, persistent reload, logout and login", async ({ page, context }, testInfo) => {
@@ -34,23 +34,28 @@ test("register, wrong OTP recovery, persistent reload, logout and login", async 
   const body = await response.json();
   expect(Object.keys(body).sort()).toEqual(["csrf_token", "expires_at", "user"]);
   expect(response.headers()["cache-control"]).toBe("no-store");
-  await expect(page.getByRole("button", { name: "Profile: Browser Test Person" })).toBeVisible();
-  await expect(page.getByRole("img", { name: "fern avatar" })).toBeVisible();
+  await expect(page.getByRole("main", { name: "Messenger", exact: true })).toHaveAttribute("data-username", username);
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByRole("button", { name: "Profile", exact: true }).click();
+  await expect(page.getByRole("region", { name: "Profile settings" }).getByRole("img", { name: "fern avatar" })).toBeVisible();
+  await page.keyboard.press("Escape");
   const cookie = (await context.cookies()).find(item => item.name === "scaler_session");
   expect(Boolean(cookie?.httpOnly && cookie.sameSite === "Lax" && cookie.domain === "127.0.0.1" && cookie.path === "/" && cookie.expires > Date.now() / 1000)).toBe(true);
   expect(cookie?.secure).toBe(false); // loopback HTTP development exception
   expect(JSON.stringify(body).includes(cookie!.value)).toBe(false);
   expect(await page.evaluate(() => ({ cookies: document.cookie.includes("scaler_session"), local: localStorage.length, session: sessionStorage.length }))).toEqual({ cookies: false, local: 0, session: 0 });
   await page.reload();
-  await expect(page.getByRole("button", { name: "Profile: Browser Test Person" })).toBeVisible();
+  await expect(page.getByRole("main", { name: "Messenger", exact: true })).toHaveAttribute("data-username", username);
   await page.screenshot({ path: testInfo.outputPath("signed-in.png"), fullPage: true });
   await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByRole("button", { name: "Profile", exact: true }).click();
   await page.getByRole("button", { name: "Log out", exact: true }).click();
   await expect(page.getByRole("button", { name: "Create demo account" })).toBeVisible();
   expect((await context.cookies()).some(item => item.name === "scaler_session")).toBe(false);
   await login(page, username);
   await page.getByRole("button", { name: "Settings", exact: true }).click();
-  await expect(page.getByText("@" + username, { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Profile", exact: true }).click();
+  await expect(page.getByRole("region", { name: "Profile settings" }).getByText("@" + username, { exact: true })).toBeVisible();
   expect(errors).toEqual([]);
 });
 
@@ -69,8 +74,9 @@ test("seed login and forwarding enforce cookie identity, Origin and CSRF", async
   expect((await context.request.post("/api/auth/logout", { data: {}, headers: { Origin: "http://evil.example", "X-CSRF-Token": (await me.json()).csrf_token } })).status()).toBe(403);
   expect((await context.request.patch("/api/users/me", { data: { display_name: "Injected", avatar_key: "sky", user_id: 900002 }, headers: { Origin: origin, "X-CSRF-Token": (await me.json()).csrf_token } })).status()).toBe(422);
   await page.reload();
-  await expect(page.getByRole("button", { name: "Profile: Alice Morgan" })).toBeVisible();
+  await expect(page.getByRole("main", { name: "Messenger", exact: true })).toHaveAttribute("data-username", "alice");
   await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByRole("button", { name: "Profile", exact: true }).click();
   await page.getByRole("button", { name: "Log out", exact: true }).click();
   await expect(page.getByRole("button", { name: "Create demo account" })).toBeVisible();
 });
@@ -81,12 +87,13 @@ test("two independent browser sessions retain their own seeded identity", async 
   try {
     const bobPage = await other.newPage();
     await login(bobPage, "bob");
-    await expect(bobPage.getByRole("button", { name: "Profile: Bob Patel" })).toBeVisible();
+    await expect(bobPage.getByRole("main", { name: "Messenger", exact: true })).toHaveAttribute("data-username", "bob");
     await page.reload();
-    await expect(page.getByRole("button", { name: "Profile: Alice Morgan" })).toBeVisible();
+    await expect(page.getByRole("main", { name: "Messenger", exact: true })).toHaveAttribute("data-username", "alice");
     await page.getByRole("button", { name: "Settings", exact: true }).click();
-  await page.getByRole("button", { name: "Log out", exact: true }).click();
+    await page.getByRole("button", { name: "Profile", exact: true }).click();
+    await page.getByRole("button", { name: "Log out", exact: true }).click();
     await bobPage.reload();
-    await expect(bobPage.getByRole("button", { name: "Profile: Bob Patel" })).toBeVisible();
+    await expect(bobPage.getByRole("main", { name: "Messenger", exact: true })).toHaveAttribute("data-username", "bob");
   } finally { await other.close(); }
 });

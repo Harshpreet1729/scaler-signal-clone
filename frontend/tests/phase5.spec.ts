@@ -7,7 +7,7 @@ async function login(page: Page, username: string) {
   await page.getByLabel("Username", { exact: true }).fill(username);
   await page.getByLabel("Demo OTP").fill("123456");
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
-  await expect(page.getByText("Messages · connected")).toBeVisible();
+  await expect(page.getByTestId("connection-status")).toHaveAttribute("data-state", "connected");
 }
 async function api(page: Page, path: string, method = "GET", body?: unknown) {
   return page.evaluate(async ({ path, method, body }) => {
@@ -42,14 +42,14 @@ test("reconnect repairs multiple history pages and an older read receipt", async
     await send(page, "Older receipt anchor");
     await expect(history(page).locator(".message-bubble").filter({ hasText: "Older receipt anchor" }).getByLabel("Status: delivered", { exact: true })).toBeVisible();
     await connection.first!.close({ code: 1012 });
-    await expect(page.locator(".preview-caption")).toHaveText("Messages · reconnecting");
+    await expect(page.getByTestId("connection-status")).toHaveAttribute("data-state", "reconnecting");
     await bob.getByRole("button", { name: new RegExp(name) }).click();
     await expect(history(bob).getByText("Older receipt anchor", { exact: true })).toBeVisible();
     for (let index = 0; index < 55; index++) {
       expect((await api(bob, `/api/conversations/${id}/messages`, "POST", { body: `Catch up ${index}`, client_message_id: crypto.randomUUID() })).status).toBe(201);
     }
     connection.reconnect = true;
-    await expect(page.locator(".preview-caption")).toHaveText("Messages · connected", { timeout: 20000 });
+    await expect(page.getByTestId("connection-status")).toHaveAttribute("data-state", "connected", { timeout: 20000 });
     await expect(history(page).locator(".message-bubble")).toHaveCount(56);
     await expect(history(page).locator(".message-bubble").filter({ hasText: "Older receipt anchor" }).getByLabel("Status: read", { exact: true })).toHaveCount(1);
     await bob.reload();

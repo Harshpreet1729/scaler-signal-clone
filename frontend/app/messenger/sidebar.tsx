@@ -1,30 +1,27 @@
 import { Icon } from "./icons";
 import { Avatar, IconButton, Receipt } from "./primitives";
-import type { Conversation, Profile } from "./types";
+import type { Conversation } from "./types";
 
-export function NavigationRail({ profile, onSettings, onMenu, onPlaceholder, onChats }: {
-  profile: Profile; onSettings: () => void; onMenu: () => void;
+export function NavigationRail({ settings = false, onSettings, onMenu, onPlaceholder, onChats }: {
+  settings?: boolean; onSettings: () => void; onMenu: () => void;
   onPlaceholder: (name: string) => void; onChats: () => void;
 }) {
   return <nav className="navigation-rail" aria-label="Main navigation">
     <IconButton icon="menu" label="Main menu" onClick={onMenu} />
     <div className="rail-items">
-      <IconButton icon="chat" label="Chats" active onClick={onChats} />
+      <IconButton icon="chat" label="Chats" active={!settings} onClick={onChats} />
       <IconButton icon="phone" label="Calls" onClick={() => onPlaceholder("Calls")} />
       <IconButton icon="stories" label="Stories" onClick={() => onPlaceholder("Stories")} />
     </div>
     <div className="rail-bottom">
-      <IconButton icon="settings" label="Settings" onClick={onSettings} />
-      <button className="profile-button" title={profile.display_name} aria-label={"Profile: " + profile.display_name} onClick={onSettings}>
-        <Avatar avatar={profile.avatar_key} name={profile.avatar_key} size={36} />
-      </button>
+      <IconButton icon="settings" label="Settings" active={settings} onClick={onSettings} />
     </div>
   </nav>;
 }
-export function ConversationSidebar({ conversations, selectedId, query, unreadOnly, onQuery, onUnread, onSelect, onNew, onMenu, onAbout, status }: {
+export function ConversationSidebar({ conversations, selectedId, query, unreadOnly, onQuery, onUnread, onSelect, onNew, onMenu }: {
   conversations: readonly Conversation[]; selectedId: string | null; query: string; unreadOnly: boolean;
   onQuery: (value: string) => void; onUnread: (value: boolean) => void; onSelect: (id: string) => void;
-  onNew: () => void; onMenu: () => void; onAbout: () => void; status: string;
+  onNew: () => void; onMenu: () => void;
 }) {
   const filtered = conversations.filter(chat => !unreadOnly || chat.unread > 0)
     .toSorted((a, b) => b.activityOrder - a.activityOrder);
@@ -45,8 +42,7 @@ export function ConversationSidebar({ conversations, selectedId, query, unreadOn
             {chat.unread > 0 ? <span className="unread-badge">{chat.unread}</span> : chat.lastReceipt ? <Receipt state={chat.lastReceipt} /> : null}
           </span></span>
       </button>)}
-      {filtered.length === 0 && <div className="list-empty"><Icon name="search" size={28} /><h2>{query || unreadOnly ? "No conversations found" : "No conversations yet"}</h2><p>{query || unreadOnly ? "Try a different name or clear your filters." : "Start a new direct message to begin."}</p>{(query || unreadOnly) && <button className="text-button" onClick={() => { onQuery(""); onUnread(false); }}>Clear search and filters</button>}</div>}
+      {filtered.length === 0 && <div className="list-empty"><h2>{query || unreadOnly ? "No conversations found" : "No chats"}</h2><p>{query || unreadOnly ? "Try a different name or clear your filters." : "Recent chats will appear here."}</p>{(query || unreadOnly) && <button className="text-button" onClick={() => { onQuery(""); onUnread(false); }}>Clear search and filters</button>}</div>}
     </div>
-    <button className="preview-caption" onClick={onAbout}>Messages · {status} <Icon name="chevron" size={13} /></button>
   </aside>;
 }

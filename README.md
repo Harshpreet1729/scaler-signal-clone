@@ -2,6 +2,8 @@
 
 **The deployed app supports direct/group messaging, admin membership, durable delivered/read acknowledgments, unread state, typing and incoming toasts.** Phase 5 validation: 78 backend tests, 32 desktop/mobile browser tests, lint, TypeScript and production build passed. See [Phase 5 production verification](docs/PHASE_5_DEPLOYMENT.md) and [Phase 6 submission QA](docs/PHASE_6_QA.md).
 
+The final Windows-reference fidelity pass adds a single bottom Settings control, full in-app Settings, sidebar New Chat, and the reference composer arrangement. [Fidelity QA](docs/SIGNAL_FIDELITY_QA.md) records normalized measurements and regression evidence:37 browser tests passed, one desktop-specific scenario skipped on mobile,78 backend tests passed, lint/typecheck/build passed. All artwork is original; personal reference captures are excluded from Git.
+
 Access the [public demo](https://frontend-production-5f84.up.railway.app/), [public repository](https://github.com/Harshpreet1729/scaler-signal-clone) and [backend health](https://backend-production-5383.up.railway.app/v1/health/live). The owner authorized the Phase 5 production rollout on 9 October; GitHub pushes deploy both existing services. The earlier [Phase 4 production verification](docs/RAILWAY_DEPLOYMENT.md) is historical evidence, not a Phase 5 test report.
 
 **Deadline: 9 October 2026, 6:00 PM IST (12:30 UTC).** This is an original interview assignment, not an official Signal client. **Demo OTP `123456` is public and impersonable. Use fictitious data only. There is no real end-to-end encryption.**

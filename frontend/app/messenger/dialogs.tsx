@@ -1,10 +1,10 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Icon, type IconName } from "./icons";
+import { Icon } from "./icons";
 import { Avatar, Dialog } from "./primitives";
 import type { Conversation, MessengerData, Profile } from "./types";
 import type { ApiUser } from "./use-chat-data";
 
-export type DialogState = "new-chat" | "new-contact" | "new-group" | "settings" | "members" | "contact" | "search-chat" | "about" | "Calls" | "Stories" | null;
+export type DialogState = "new-contact" | "new-group" | "members" | "contact" | "search-chat" | "about" | "Calls" | "Stories" | null;
 type Props = {
   kind: Exclude<DialogState, null>; profile: Profile; data: MessengerData; conversation?: Conversation;
   onClose: () => void; onOpen: (kind: DialogState) => void; onSelect: (id: string) => void; onLogout: () => void; busy: boolean;
@@ -65,29 +65,6 @@ function NewGroup({ data, profile, createGroup, onSelect, onClose }: Pick<Props,
     <div className="dialog-footer"><button className="primary-button" type="submit">Create group</button></div>
   </form>;
 }
-function Settings({ profile, onLogout, busy }: Pick<Props, "profile" | "onLogout" | "busy">) {
-  const [category, setCategory] = useState("Profile");
-  const categories: { name: string; icon: IconName }[] = [{ name: "Profile", icon: "chat" }, { name: "Privacy", icon: "shield" }, { name: "Notifications", icon: "bell" }, { name: "Appearance", icon: "sun" }];
-  return <div className="settings-layout">
-    <nav className="settings-nav" aria-label="Settings categories">{categories.map(item => <button key={item.name} aria-pressed={category === item.name} onClick={() => setCategory(item.name)}><Icon name={item.icon} size={20} />{item.name}</button>)}</nav>
-    <section className="settings-detail" aria-label={category + " settings"}><h3>{category}</h3>
-      {category === "Profile" ? <>
-        <div className="settings-profile"><Avatar avatar={profile.avatar_key} name={profile.avatar_key} size={76} /><h4>{profile.display_name}</h4><p>@{profile.username}</p></div>
-        <p>Your account is saved. Your session stays signed in after a reload.</p>
-        <div className="settings-row"><span>Account type<small>Public fixed-OTP authentication</small></span><span className="muted">Demo</span></div>
-        <button className="secondary-button logout-button" onClick={onLogout} disabled={busy}><Icon name="logout" size={18} />{busy ? "Logging out…" : "Log out"}</button>
-      </> : <>
-        <p className="preview-note">Settings preview. Preference controls are placeholders.</p>
-        {category === "Privacy" && <><Setting label="Read receipts" detail="Enabled for this demo; preference is a placeholder" checked /><Setting label="Typing indicators" detail="Enabled for this demo; preference is a placeholder" checked /><p className="privacy-note"><Icon name="shield" size={18} />This assignment demo does not implement end-to-end encryption.</p></>}
-        {category === "Notifications" && <><Setting label="Message notifications" detail="In-app incoming-message toasts are enabled" checked /><Setting label="Play notification sounds" detail="No sounds are played in this preview" /><div className="settings-row"><span>Show in notifications<small>Name and message</small></span><Icon name="chevron" size={18} /></div></>}
-        {category === "Appearance" && <><div className="settings-row"><span>Theme<small>Light</small></span><span className="theme-swatch" /></div><p>Light theme is the approved desktop reference. Dark mode is deferred.</p><div className="settings-row"><span>Chat color<small>Blue</small></span><span className="color-swatch" /></div></>}
-      </>}
-    </section>
-  </div>;
-}
-function Setting({ label, detail, checked = false }: { label: string; detail: string; checked?: boolean }) {
-  return <label className="settings-row"><span>{label}<small>{detail}</small></span><input className="setting-toggle" type="checkbox" checked={checked} disabled aria-label={label + " (preview)"} /></label>;
-}
 function ChatSearch({ data, conversation }: { data: MessengerData; conversation?: Conversation }) {
   const [query, setQuery] = useState("");
   const results = (conversation ? data.messages[conversation.id] ?? [] : []).filter(message => query.trim() && message.body.toLowerCase().includes(query.trim().toLowerCase()));
@@ -95,31 +72,6 @@ function ChatSearch({ data, conversation }: { data: MessengerData; conversation?
     <p className="muted">{query ? results.length + " loaded results" : "Type to search loaded history."}</p>
     <div className="search-results">{results.map(message => <article key={message.id}><strong>{data.people[message.sender]?.name ?? "Member"}</strong><time>{message.date} · {message.time}</time><p>{message.body}</p></article>)}</div>
     {query && results.length === 0 && <p>No matching messages.</p>}</div>;
-}
-
-function NewChat({ contacts, directory, startDirect, onSelect, onClose, onOpen }: Pick<Props, "contacts" | "directory" | "startDirect" | "onSelect" | "onClose" | "onOpen">) {
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<ApiUser[]>(contacts);
-  const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState("");
-  useEffect(() => {
-    let active = true;
-    if (!query.trim()) return;
-    const timer = setTimeout(() => { void directory(query.trim()).then(value => { if (active) setResults(value); }).catch(error => { if (active) setNotice(error.message); }); }, 200);
-    return () => { active = false; clearTimeout(timer); };
-  }, [query, directory]);
-  async function openPerson(userId: number) {
-    setBusy(true); setNotice("");
-    try { onSelect(await startDirect(userId)); onClose(); }
-    catch (error) { setNotice(error instanceof Error ? error.message : "Could not open chat."); }
-    finally { setBusy(false); }
-  }
-  const visible = query.trim() ? results : contacts;
-  return <div className="dialog-form"><label htmlFor="contact-search">Find a user</label><input id="contact-search" type="search" placeholder="Search by name or username" value={query} onChange={event => { setQuery(event.target.value); setNotice(""); }} />
-    <div className="new-chat-actions"><button onClick={() => onOpen("new-contact")}><Icon name="plus" />New contact</button><button onClick={() => onOpen("new-group")}><Icon name="group" />New group</button></div>
-    <p className="section-label">{query ? "DIRECTORY RESULTS" : "YOUR CONTACTS"}</p><div className="contact-options">{visible.map(person => <button key={person.id} disabled={busy} onClick={() => { void openPerson(person.id); }}><Avatar avatar={person.avatar_key} name={person.display_name} size={40} /><span>{person.display_name}<small>@{person.username}</small></span></button>)}</div>
-    {visible.length === 0 && <p>{query ? "No users found." : "No contacts yet. Search for a username to start a chat."}</p>}
-    {notice && <p className="error" role="alert">{notice}</p>}</div>;
 }
 
 function GroupDetails({ conversation, data, profile, changeGroup, directory }: Pick<Props, "data" | "profile" | "changeGroup" | "directory"> & { conversation: Conversation }) {
@@ -151,13 +103,11 @@ function GroupDetails({ conversation, data, profile, changeGroup, directory }: P
 }
 
 export function MessengerDialog(props: Props) {
-  const { kind, onClose, onOpen, data, profile, conversation, onSelect } = props;
-  const titles: Record<Exclude<DialogState, null>, string> = { "new-chat": "New message", "new-contact": "New contact", "new-group": "New group", settings: "Settings", members: "Group details", contact: "Contact details", "search-chat": "Search conversation", about: "About this preview", Calls: "Calls", Stories: "Stories" };
-  return <Dialog key={kind} title={titles[kind]} onClose={onClose} wide={kind === "settings"} side={kind === "members"}>
-    {kind === "new-chat" && <NewChat contacts={props.contacts} directory={props.directory} startDirect={props.startDirect} onSelect={onSelect} onClose={onClose} onOpen={onOpen} />}
+  const { kind, onClose, data, profile, conversation, onSelect } = props;
+  const titles: Record<Exclude<DialogState, null>, string> = { "new-contact": "New contact", "new-group": "New group", members: "Group details", contact: "Contact details", "search-chat": "Search conversation", about: "About this preview", Calls: "Calls", Stories: "Stories" };
+  return <Dialog key={kind} title={titles[kind]} onClose={onClose} side={kind === "members"}>
     {kind === "new-contact" && <NewContact directory={props.directory} addContact={props.addContact} />}
     {kind === "new-group" && <NewGroup data={data} profile={profile} createGroup={props.createGroup} onSelect={onSelect} onClose={onClose} />}
-    {kind === "settings" && <Settings profile={profile} onLogout={props.onLogout} busy={props.busy} />}
     {kind === "search-chat" && <ChatSearch data={data} conversation={conversation} />}
     {kind === "members" && conversation && <GroupDetails conversation={conversation} data={data} profile={profile} changeGroup={props.changeGroup} directory={props.directory} />}
     {kind === "contact" && conversation && <div className="details-hero"><Avatar avatar={conversation.avatar} name={conversation.name} size={88} /><h3>{conversation.name}</h3><p>@{conversation.members.map(id => data.people[id]).find(person => person?.id !== String(profile.id))?.username ?? "contact"}</p><p className="preview-note">Last seen recently is a mocked demo status.</p></div>}

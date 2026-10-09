@@ -7,8 +7,8 @@ async function login(page: Page, username: string) {
   await page.getByLabel("Username", { exact: true }).fill(username);
   await page.getByLabel("Demo OTP").fill("123456");
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
-  await expect(page.getByRole("button", { name: /^Profile:/ })).toBeVisible();
-  await expect(page.getByText("Messages · connected")).toBeVisible();
+  await expect(page.getByRole("main", { name: "Messenger", exact: true })).toHaveAttribute("data-username", username);
+  await expect(page.getByTestId("connection-status")).toHaveAttribute("data-state", "connected");
 }
 async function back(page: Page) {
   const button = page.getByRole("button", { name: "Back to conversations" });
@@ -33,7 +33,8 @@ test("seeded conversations, directory, contacts, search and group scope", async 
   await expect(rows).toHaveCount((await unread.json()).conversations.length);
   await page.getByRole("button", { name: "Clear filter" }).click();
   await page.getByRole("button", { name: /Weekend Plans/ }).click();
-  await expect(page.getByRole("button", { name: "Send message" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Send message" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Voice messages — coming soon" })).toBeDisabled();
   await page.getByRole("button", { name: "View group members" }).click();
   await expect(page.getByText("Admin", { exact: true })).toBeVisible();
   await expect(page.getByLabel("Add members", { exact: true })).toBeEnabled();
@@ -42,13 +43,13 @@ test("seeded conversations, directory, contacts, search and group scope", async 
   await page.getByRole("button", { name: "New chat", exact: true }).click();
   await page.getByLabel("Find a user").fill("dave");
   await expect(page.getByRole("button", { name: /Dave/ })).toBeVisible();
-  await page.getByRole("button", { name: "Close dialog" }).click();
+  await page.getByRole("button", { name: "Back to Chats" }).click();
   await page.getByRole("button", { name: "Conversation list menu" }).click();
   await page.getByRole("menuitem", { name: "New contact" }).click();
   await page.getByLabel("Username", { exact: true }).fill("dave");
   await expect(page.getByText("Matches: @dave")).toBeVisible();
   await page.getByRole("button", { name: "Add contact" }).click();
-  await expect(page.getByRole("status")).toContainText("in your contacts");
+  await expect(page.locator(".inline-notice")).toContainText("in your contacts");
   await page.getByRole("button", { name: "Close dialog" }).click();
   await page.getByRole("button", { name: "New chat", exact: true }).click();
   await expect(page.getByRole("button", { name: /Dave/ })).toBeVisible();
@@ -74,11 +75,11 @@ test("two sessions exchange persistent direct messages", async ({ browser, page 
     await expect(page.getByRole("region", { name: "Message history" }).getByText(message, { exact: true })).toHaveCount(1);
     await expect(bob.getByRole("region", { name: "Message history" }).getByText(message, { exact: true })).toHaveCount(1);
     await page.reload();
-    await expect(page.getByRole("button", { name: "Profile: Alice Morgan" })).toBeVisible();
+    await expect(page.getByRole("main", { name: "Messenger", exact: true })).toHaveAttribute("data-username", "alice");
     await page.getByRole("button", { name: /Bob Patel/ }).first().click();
     await expect(page.getByRole("region", { name: "Message history" }).getByText(message, { exact: true })).toHaveCount(1);
     await bob.reload();
-    await expect(bob.getByRole("button", { name: "Profile: Bob Patel" })).toBeVisible();
+    await expect(bob.getByRole("main", { name: "Messenger", exact: true })).toHaveAttribute("data-username", "bob");
     await bob.getByRole("button", { name: /Alice Morgan/ }).first().click();
     await expect(bob.getByRole("region", { name: "Message history" }).getByText(message, { exact: true })).toHaveCount(1);
     const reply = `Reply ${crypto.randomUUID()}`;
@@ -89,10 +90,11 @@ test("two sessions exchange persistent direct messages", async ({ browser, page 
     await bob.screenshot({ path: testInfo.outputPath("bob-live.png"), animations: "disabled" });
     await back(bob);
     await bob.getByRole("button", { name: "Settings", exact: true }).click();
+    await bob.getByRole("button", { name: "Profile", exact: true }).click();
     await bob.getByRole("button", { name: "Log out", exact: true }).click();
     await expect(bob.getByRole("button", { name: "Log in", exact: true })).toBeVisible();
     await page.reload();
-    await expect(page.getByRole("button", { name: "Profile: Alice Morgan" })).toBeVisible();
+    await expect(page.getByRole("main", { name: "Messenger", exact: true })).toHaveAttribute("data-username", "alice");
   } finally { await bobContext.close(); }
 });
 
@@ -123,6 +125,11 @@ test("chat menus, loaded search, settings and placeholder dialogs retain keyboar
   await page.getByLabel("Find a user").fill("nobody_at_all");
   await expect(page.getByText("No users found.")).toBeVisible();
   await page.getByRole("button", { name: "New group", exact: true }).click();
+  await page.getByRole("button", { name: "Create group" }).focus();
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("button", { name: "Close dialog" })).toBeFocused();
+  await page.keyboard.press("Shift+Tab");
+  await expect(page.getByRole("button", { name: "Create group" })).toBeFocused();
   await page.getByLabel("Group name").fill("Picnic");
   await page.getByRole("button", { name: "Create group" }).click();
   await expect(page.getByRole("alert").filter({ hasText: "choose at least one member" })).toBeVisible();
@@ -131,17 +138,21 @@ test("chat menus, loaded search, settings and placeholder dialogs retain keyboar
   await expect(page.getByRole("region", { name: "Picnic conversation" })).toBeVisible();
   await back(page);
   await page.getByRole("button", { name: "Settings", exact: true }).click();
-  await expect(page.getByText("@alice", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Profile", exact: true }).click();
+  await expect(page.getByRole("region", { name: "Profile settings" }).getByText("@alice", { exact: true })).toBeVisible();
+  if (await page.getByRole("button", { name: "Back to Settings" }).isVisible()) await page.getByRole("button", { name: "Back to Settings" }).click();
   await page.getByRole("button", { name: "Privacy", exact: true }).click();
   await expect(page.getByRole("checkbox", { name: "Read receipts (preview)" })).toBeDisabled();
   await expect(page.getByRole("checkbox", { name: "Read receipts (preview)" })).toBeChecked();
   await expect(page.getByRole("checkbox", { name: "Typing indicators (preview)" })).toBeChecked();
+  if (await page.getByRole("button", { name: "Back to Settings" }).isVisible()) await page.getByRole("button", { name: "Back to Settings" }).click();
   await page.getByRole("button", { name: "Notifications", exact: true }).click();
   await expect(page.getByRole("checkbox", { name: "Message notifications (preview)" })).toBeDisabled();
+  if (await page.getByRole("button", { name: "Back to Settings" }).isVisible()) await page.getByRole("button", { name: "Back to Settings" }).click();
   await page.getByRole("button", { name: "Appearance", exact: true }).click();
   await expect(page.getByText("Light", { exact: true })).toBeVisible();
-  for (let index = 0; index < 7; index++) await page.keyboard.press("Tab");
-  expect(await page.evaluate(() => !!document.activeElement?.closest("dialog"))).toBe(true);
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.getByRole("region", { name: "Appearance settings" })).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(page.getByRole("button", { name: "Settings", exact: true })).toBeFocused();
   for (const name of ["Calls", "Stories"]) {
@@ -162,12 +173,15 @@ test("new direct thread appears for both members; new account starts empty", asy
     await fresh.getByLabel("Display name", { exact: true }).fill("Fresh User");
     await fresh.getByLabel("Demo OTP").fill("123456");
     await fresh.getByRole("button", { name: "Create demo account" }).click();
-    await expect(fresh.getByRole("button", { name: "Profile: Fresh User" })).toBeVisible();
+    await expect(fresh.getByRole("main", { name: "Messenger", exact: true })).toHaveAttribute("data-username", username);
     await expect(fresh.locator(".conversation-row")).toHaveCount(0);
-    await expect(fresh.getByText("No conversations yet")).toBeVisible();
+    await expect(fresh.getByText("No chats")).toBeVisible();
+    await expect(fresh.getByTestId("connection-status")).toHaveAttribute("data-state", "connected");
+    await fresh.setViewportSize(testInfo.project.name.includes("mobile") ? { width: 390, height: 844 } : { width: 1440, height: 720 });
+    await fresh.screenshot({ path: testInfo.outputPath("empty-fresh-account.png") });
     await page.getByRole("button", { name: "New chat", exact: true }).click();
     await page.getByLabel("Find a user").fill(username);
-    await page.getByRole("dialog").getByRole("button", { name: /Fresh User/ }).click();
+    await page.getByRole("complementary", { name: "New chat", exact: true }).getByRole("button", { name: /Fresh User/ }).click();
     await expect(page.getByLabel(/Fresh User conversation/)).toBeVisible();
     await expect(fresh.locator(".conversation-row")).toHaveCount(1);
     await expect(fresh.getByRole("button", { name: /Alice Morgan/ }).first()).toBeVisible();
@@ -193,13 +207,13 @@ test("socket reconnection restores missed message from durable history", async (
     await bob.getByRole("button", { name: /Alice Morgan/ }).first().click();
     expect(control.first).toBeDefined();
     await control.first!.close({ code: 1012 });
-    await expect(page.locator(".preview-caption")).toHaveText("Messages · reconnecting");
+    await expect(page.getByTestId("connection-status")).toHaveAttribute("data-state", "reconnecting");
     const missed = `While offline ${crypto.randomUUID()}`;
     await bob.getByLabel("Message draft").fill(missed);
     await bob.getByRole("button", { name: "Send message" }).click();
     await expect(bob.getByText(missed, { exact: true })).toHaveCount(1);
     control.allowReconnect = true;
-    await expect(page.locator(".preview-caption")).toHaveText("Messages · connected", { timeout: 20000 });
+    await expect(page.getByTestId("connection-status")).toHaveAttribute("data-state", "connected", { timeout: 20000 });
     await expect(page.getByRole("region", { name: "Message history" }).getByText(missed, { exact: true })).toHaveCount(1);
   } finally {
     await bobContext.close();
@@ -268,7 +282,7 @@ test("real-data screenshots and viewport geometry", async ({ page }, testInfo) =
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   await page.getByRole("button", { name: "Privacy", exact: true }).click();
   await capture(mobile ? "mobile-settings" : "desktop-settings");
-  await page.getByRole("button", { name: "Close dialog" }).click();
+  await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "New chat", exact: true }).click();
   await page.getByRole("button", { name: "New group", exact: true }).click();
   await capture(mobile ? "mobile-new-group" : "desktop-new-group");

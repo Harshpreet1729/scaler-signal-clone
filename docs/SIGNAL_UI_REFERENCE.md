@@ -1,6 +1,6 @@
 # Signal Desktop visual reference and approval gate
 
-**Current reference:** Windows/light screenshot and missing-state approximations approved in [PHASE_2_APPROVAL.md](PHASE_2_APPROVAL.md). Phase 5 is approved and deployed. Integrated desktop/mobile comparison and targeted final polish are recorded in [PHASE_6_QA.md](PHASE_6_QA.md); [Phase 3 QA](PHASE_3_VISUAL_QA.md) preserves the original visual implementation history.
+**Current reference:** Seven owner-supplied real Signal Windows screenshots approved on9October supersede older images for overlapping states. They remain private and are not repository assets. Normalized measurements, ranked differences and implementation evidence: [final fidelity QA](SIGNAL_FIDELITY_QA.md). The earlier [Phase 2 approval](PHASE_2_APPROVAL.md), [Phase 6 QA](PHASE_6_QA.md) and [Phase 3 QA](PHASE_3_VISUAL_QA.md) preserve historical decisions.
 
 Historical Phase 0 research follows. At that time the status was **candidate reference, not approved**. Research/inspection date: 2026-10-08. The assignment has no screenshots. No UI has been built, no Signal/clone source repository has been fetched, and no proprietary UI assets have been copied into this project.
 
