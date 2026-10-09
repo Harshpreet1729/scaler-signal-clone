@@ -153,7 +153,11 @@ svg { flex-shrink: 0; vertical-align: middle; }
 .popup-menu button { width: 100%; display: flex; align-items: center; text-align: left; gap: 12px; padding: 12px; border-radius: 5px; }
 .menu-rail { top: 52px; left: 12px; }
 .menu-list { top: 53px; left: calc(var(--rail) + var(--sidebar) - 244px); }
-.menu-chat { top: 54px; right: 18px; }
+.menu-chat { top: 48px; right: 18px; width: 216px; padding: 4px; border-color: #dedede; border-radius: 10px; box-shadow: 0 4px 14px #00000014; }
+.menu-chat button { height: 36px; gap: 10px; padding: 0 10px; border-radius: 5px; }
+.menu-chat button svg { width: 18px; height: 18px; }
+.menu-chat button:hover { background: #f0f0f0; }
+.menu-chat button:focus-visible { background: #eceff5; outline-offset: -2px; }
 .dialog { padding: 0; border: 1px solid #ddd; border-radius: 24px; width: 420px; max-width: calc(100vw - 32px); max-height: calc(100dvh - 48px); box-shadow: 0 15px 65px #0003; color: var(--text); background: white; overflow: auto; }
 .dialog::backdrop { background: #0004; }
 .dialog-header { height: 64px; padding: 0 20px 0 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: white; z-index: 1; }
@@ -292,6 +296,7 @@ svg { flex-shrink: 0; vertical-align: middle; }
   .mobile-search-back { display: flex; align-items: center; gap: 4px; align-self: flex-start; font-size: 12px; margin: 0 12px 10px; }
   .mobile-back { display: inline-flex; }
   .chat-header { gap: 2px; padding: 0 8px; }
+  .menu-chat { right: 8px; }
   .chat-title { gap: 8px; }
   .chat-title .avatar { width: 30px !important; height: 30px !important; }
   .chat-title strong { max-width: 144px; font-size: 13px; }
