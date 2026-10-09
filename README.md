@@ -21,7 +21,7 @@ An original, full-stack messaging application built for the **Scaler SDE Fullsta
 <details>
 <summary><strong>Group messaging and reactions</strong></summary>
 
-![Desktop group conversation with live emoji reaction counts](docs/assets/screenshots/desktop-group.webp)
+![Desktop group conversation with live emoji reaction counts](docs/assets/screenshots/desktop-group-conversation.webp)
 
 *A fictional picnic exchange in Weekend Plans, sent through three independent demo sessions with live reaction counts.*
 
@@ -74,7 +74,7 @@ SQLite commits precede real-time publication. Client message UUIDs prevent dupli
 
 ### Mobile experience
 
-<img src="docs/assets/screenshots/mobile-chat.webp" alt="Responsive chat on the deployed messenger at a mobile viewport" width="300" />
+<img src="docs/assets/screenshots/mobile-group-chat.webp" alt="Responsive chat on the deployed messenger at a mobile viewport" width="300" />
 
 *The same application adapts to a conversation list, focused chat and mobile back navigation.*
 
