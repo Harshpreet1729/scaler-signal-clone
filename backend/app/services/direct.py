@@ -6,7 +6,7 @@ from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
 from app.auth import APIError, now_ms, public_user
-from app.models import Contact, Conversation, ConversationMember, Message, MessageReceipt, User
+from app.models import Contact, Conversation, ConversationMember, Message, MessageReaction, MessageReceipt, User
 
 
 def active_conversation(db: Session, conversation_id: int, user_id: int) -> Conversation:
@@ -35,12 +35,17 @@ def message_status(db: Session, message: Message) -> str:
 
 def public_message(db: Session, message: Message) -> dict:
     receipts = list(db.scalars(select(MessageReceipt).where(MessageReceipt.message_id == message.id)))
+    reactions: dict[str, list[int]] = {}
+    for row in db.scalars(select(MessageReaction).where(MessageReaction.message_id == message.id).order_by(MessageReaction.emoji, MessageReaction.user_id)):
+        reactions.setdefault(row.emoji, []).append(row.user_id)
     return {"id": message.id, "conversation_id": message.conversation_id, "sender_id": message.sender_id,
             "client_message_id": message.client_message_id, "body": message.body,
             "created_at": message.created_at, "status": message_status(db, message),
             "recipient_ids": [row.recipient_id for row in receipts],
             "delivered_ids": [row.recipient_id for row in receipts if row.delivered_at is not None],
-            "read_ids": [row.recipient_id for row in receipts if row.read_at is not None]}
+            "read_ids": [row.recipient_id for row in receipts if row.read_at is not None],
+            "reaction_version": message.reaction_version,
+            "reactions": [{"emoji": emoji, "user_ids": ids, "count": len(ids)} for emoji, ids in reactions.items()]}
 
 
 def public_conversation(db: Session, conversation: Conversation, user_id: int) -> dict:

@@ -12,6 +12,7 @@ from app.routes.auth import router as auth_router
 from app.routes.conversations import router as conversations_router
 from app.routes.groups import router as groups_router
 from app.routes.receipts import router as receipts_router
+from app.routes.reactions import router as reactions_router
 from app.routes.socket import router as socket_router
 from app.realtime import SocketManager, TicketStore
 
@@ -67,5 +68,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(conversations_router, prefix="/v1")
     app.include_router(groups_router, prefix="/v1")
     app.include_router(receipts_router, prefix="/v1")
+    app.include_router(reactions_router, prefix="/v1")
     app.include_router(socket_router, prefix="/v1")
     return app

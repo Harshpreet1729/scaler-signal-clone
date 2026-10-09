@@ -19,7 +19,7 @@ export default function Messenger({ profile, csrf, onLogout, busy, error }: Prop
   const [screen, setScreen] = useState<"chats" | "settings" | "new-chat">("chats");
   const [menu, setMenu] = useState<"rail" | "list" | "chat" | null>(null);
   const [toast, setToast] = useState<{ text: string; sequence: number } | null>(null);
-  const { data, selectedConversation: conversation, acknowledge, typing, setTyping, incoming, dismissIncoming, contacts, status, problem, send, directory, addContact, startDirect, createGroup, changeGroup, loadOlder, older } = useChatData(profile, csrf, query, unreadOnly, selectedId);
+  const { data, selectedConversation: conversation, acknowledge, typing, setTyping, incoming, dismissIncoming, contacts, status, problem, send, react, directory, addContact, startDirect, createGroup, changeGroup, loadOlder, older } = useChatData(profile, csrf, query, unreadOnly, selectedId);
   useEffect(() => {
     if (!toast) return;
     const timer = setTimeout(() => setToast(null), 6000);
@@ -49,7 +49,7 @@ export default function Messenger({ profile, csrf, onLogout, busy, error }: Prop
     {screen === "settings" ? <SettingsView profile={profile} onLogout={onLogout} busy={busy} /> : screen === "new-chat" ?
       <NewChatSidebar contacts={contacts} directory={directory} startDirect={startDirect} onSelect={select} onBack={returnToChats} onGroup={() => open("new-group")} onContact={() => open("new-contact")} /> :
       <ConversationSidebar conversations={data.conversations} selectedId={selectedId} query={query} unreadOnly={unreadOnly} onQuery={setQuery} onUnread={setUnreadOnly} onSelect={setSelectedId} onNew={() => open("new-chat")} onMenu={() => setMenu(menu === "list" ? null : "list")} />}
-    <ChatPane active={screen !== "settings"} conversation={conversation} messages={selectedId ? data.messages[selectedId] ?? [] : []} people={data.people}
+    <ChatPane active={screen !== "settings"} conversation={conversation} messages={selectedId ? data.messages[selectedId] ?? [] : []} people={data.people} userId={profile.id} onReact={react}
       onBack={() => setSelectedId(null)} onDetails={() => open(conversation?.kind === "group" ? "members" : "contact")}
       onSearch={() => open("search-chat")} onMenu={() => setMenu(menu === "chat" ? null : "chat")}
       onUnavailable={notify} onNew={() => open("new-chat")} onSend={send} onRead={acknowledge} onTyping={setTyping} typingNames={(selectedId ? typing[selectedId]?.ids ?? [] : []).map(id => data.people[id]?.name.split(" ")[0] ?? "Member")}

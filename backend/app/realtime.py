@@ -144,6 +144,15 @@ class SocketManager:
             self.typing.pop(key)
         await self.publish_typing(conversation_id)
 
+    async def reaction_updated(self, message: dict) -> None:
+        for connection in list(self._connections):
+            if await self.is_active(connection, message["conversation_id"]):
+                try:
+                    await connection.send({"v": 1, "type": "reaction.updated", "conversation_id": message["conversation_id"],
+                                           "payload": {"message": message}})
+                except Exception:
+                    self.discard(connection)
+
     async def publish_typing(self, conversation_id: int) -> None:
         current = time.monotonic()
         user_ids = sorted({connection.user_id for (connection, cid), expiry in self.typing.items()

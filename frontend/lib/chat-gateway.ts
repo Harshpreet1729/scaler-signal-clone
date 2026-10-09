@@ -3,8 +3,9 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { backendOrigin } from "./backend";
 
-type Operation = "users" | "contacts" | "contact-add" | "conversations" | "direct-create" | "detail" | "history" | "send" | "group-create" | "group-rename" | "members" | "member-add" | "member-remove" | "delivered" | "read";
+type Operation = "users" | "contacts" | "contact-add" | "conversations" | "direct-create" | "detail" | "history" | "send" | "group-create" | "group-rename" | "members" | "member-add" | "member-remove" | "delivered" | "read" | "react";
 const operations: Record<Operation, { method: "GET" | "POST" | "PATCH" | "DELETE"; path: (id?: number, userId?: number) => string; params: readonly string[] }> = {
+  react: { method: "POST", path: id => `/v1/conversations/${id}/reactions`, params: [] },
   "group-create": { method: "POST", path: () => "/v1/conversations/groups", params: [] },
   "group-rename": { method: "PATCH", path: id => `/v1/conversations/${id}`, params: [] },
   members: { method: "GET", path: id => `/v1/conversations/${id}/members`, params: [] },

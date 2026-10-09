@@ -8,8 +8,10 @@ database_path = context.config.attributes.get("database_path")
 if database_path is None:
     database_path = Settings.from_env().database_path
 engine = make_engine(database_path)
-with engine.connect() as connection:
-    context.configure(connection=connection, target_metadata=Base.metadata, render_as_batch=True, compare_type=True)
-    with context.begin_transaction():
-        context.run_migrations()
-engine.dispose()
+try:
+    with engine.connect() as connection:
+        context.configure(connection=connection, target_metadata=Base.metadata, render_as_batch=True, compare_type=True)
+        with context.begin_transaction():
+            context.run_migrations()
+finally:
+    engine.dispose()

@@ -27,7 +27,7 @@ def test_migrate_before_single_worker_start_without_seed(monkeypatch, deployment
 
     def server(app, **kwargs):
         with closing(sqlite3.connect(deployment_env)) as db:
-            assert db.execute("SELECT version_num FROM alembic_version").fetchone() == ("0001",)
+            assert db.execute("SELECT version_num FROM alembic_version").fetchone() == ("0002",)
             assert db.execute("SELECT count(*) FROM users").fetchone() == (0,)
         starts.append(kwargs)
 

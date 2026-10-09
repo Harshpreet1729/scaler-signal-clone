@@ -109,6 +109,7 @@ class Message(Base):
     client_message_id: Mapped[str] = mapped_column(String(36))
     body: Mapped[str] = mapped_column(String(4000))
     created_at: Mapped[int] = mapped_column(Integer)
+    reaction_version: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     __table_args__ = (
         ForeignKeyConstraint(["conversation_id", "sender_id"], ["conversation_members.conversation_id", "conversation_members.user_id"], ondelete="RESTRICT"),
         UniqueConstraint("sender_id", "client_message_id", name="uq_messages_sender_client"),
@@ -120,6 +121,21 @@ class Message(Base):
 
 
 Index("ix_messages_history", Message.conversation_id, Message.id.desc())
+
+
+class MessageReaction(Base):
+    __tablename__ = "message_reactions"
+    message_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    emoji: Mapped[str] = mapped_column(String(8), primary_key=True)
+    conversation_id: Mapped[int] = mapped_column(Integer)
+    created_at: Mapped[int] = mapped_column(Integer)
+    __table_args__ = (
+        ForeignKeyConstraint(["conversation_id", "message_id"], ["messages.conversation_id", "messages.id"], ondelete="RESTRICT"),
+        ForeignKeyConstraint(["conversation_id", "user_id"], ["conversation_members.conversation_id", "conversation_members.user_id"], ondelete="RESTRICT"),
+        CheckConstraint("emoji IN ('👍','❤️','😂','😮','😢','🙏')", name="ck_reactions_emoji"),
+        Index("ix_reactions_member", "conversation_id", "user_id"),
+    )
 
 
 class MessageReceipt(Base):

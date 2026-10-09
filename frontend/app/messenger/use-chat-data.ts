@@ -1,10 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { ChatMessage, Conversation, MessengerData, Person, Profile, ReceiptState } from "./types";
+import type { ChatMessage, Conversation, MessengerData, Person, Profile, Reaction, ReceiptState } from "./types";
 
 export type ApiUser = Profile & { role?: "admin" | "member" };
-export type ApiMessage = { id: number; conversation_id: number; sender_id: number; client_message_id: string; body: string; created_at: number; status: "sending" | "failed" | "sent" | "delivered" | "read"; recipient_ids?: number[]; delivered_ids?: number[]; read_ids?: number[] };
+export type ApiMessage = { id: number; conversation_id: number; sender_id: number; client_message_id: string; body: string; created_at: number; status: "sending" | "failed" | "sent" | "delivered" | "read"; recipient_ids?: number[]; delivered_ids?: number[]; read_ids?: number[]; reactions?: Reaction[]; reaction_version?: number };
 export type ApiConversation = { id: number; kind: "direct" | "group"; name: string; avatar_key: string; members: ApiUser[]; last_activity_at: number; version: number; preview: ApiMessage | null; unread_count: number };
 type SocketFrame = { v: number; type: string; request_id?: string; conversation_id?: number; payload?: { message?: ApiMessage; code?: string; detail?: string; user_id?: number; user_ids?: number[]; expires_in_ms?: number } };
 type Pending = { clientId: string; body: string };
@@ -45,6 +45,8 @@ function merge(existing: ApiMessage[], incoming: ApiMessage): ApiMessage[] {
   if (previous && previous.id > 0) {
     const rank = { failed: 0, sending: 0, sent: 1, delivered: 2, read: 3 };
     incoming = { ...incoming, status: rank[previous.status] > rank[incoming.status] ? previous.status : incoming.status,
+      reactions: (previous.reaction_version ?? 0) > (incoming.reaction_version ?? 0) ? previous.reactions : incoming.reactions,
+      reaction_version: Math.max(previous.reaction_version ?? 0, incoming.reaction_version ?? 0),
       delivered_ids: [...new Set([...(previous.delivered_ids ?? []), ...(incoming.delivered_ids ?? [])])],
       read_ids: [...new Set([...(previous.read_ids ?? []), ...(incoming.read_ids ?? [])])] };
   }
@@ -202,7 +204,7 @@ export function useChatData(profile: Profile, csrf: string, query: string, unrea
             void Promise.all([listRef.current(), historyRef.current()]).catch(error => setProblem(error.message));
             return;
           }
-          if ((frame.type === "message.created" || frame.type === "receipt.updated") && frame.payload?.message) {
+          if ((frame.type === "message.created" || frame.type === "receipt.updated" || frame.type === "reaction.updated") && frame.payload?.message) {
             const item = frame.payload.message;
             const key = String(item.conversation_id);
             if (revoked.current.has(key)) return;
@@ -315,6 +317,12 @@ export function useChatData(profile: Profile, csrf: string, query: string, unrea
   }, [csrf, profile.id]);
 
   const directory = useCallback(async (term: string) => (await chatApi<{ users: ApiUser[] }>(`/api/users?query=${encodeURIComponent(term.slice(0, 64))}`)).users, []);
+  const react = useCallback(async (conversationId: string, messageId: string, emoji: string, active: boolean) => {
+    const value = await chatApi<{ message: ApiMessage }>(`/api/conversations/${conversationId}/reactions`, csrf,
+      { message_id: Number(messageId), emoji, active });
+    if (revoked.current.has(conversationId)) return;
+    setMessages(current => ({ ...current, [conversationId]: merge(current[conversationId] ?? [], value.message) }));
+  }, [csrf]);
   const addContact = useCallback(async (userId: number) => {
     await chatApi("/api/contacts", csrf, { user_id: userId });
     await refreshContacts();
@@ -357,7 +365,7 @@ export function useChatData(profile: Profile, csrf: string, query: string, unrea
         time: clock(item.created_at), date: day(item.created_at), direction: item.sender_id === profile.id ? "outgoing" : "incoming",
         receipt: item.sender_id === profile.id ? item.status as ReceiptState : undefined,
         unread: Boolean(item.recipient_ids?.includes(profile.id) && !item.read_ids?.includes(profile.id)),
-        clientMessageId: item.client_message_id }));
+        clientMessageId: item.client_message_id, reactions: item.reactions ?? [] }));
     }
     return { source: "connected", conversations: rows, people, messages: displayed };
   }, [conversations, contacts, messages, profile]);
@@ -366,5 +374,5 @@ export function useChatData(profile: Profile, csrf: string, query: string, unrea
   const visibleData = { ...data, conversations: data.conversations.filter(item => (!unreadOnly || item.unread > 0) &&
     (!query.trim() || item.name.toLowerCase().includes(query.trim().toLowerCase()) || item.members.some(id => id !== String(profile.id) &&
       [data.people[id]?.name, data.people[id]?.username].some(value => value?.toLowerCase().includes(query.trim().toLowerCase()))))) };
-  return { data: visibleData, selectedConversation, typing, setTyping, incoming, dismissIncoming: () => setIncoming(null), acknowledge, contacts, status, problem, send, directory, addContact, startDirect, createGroup, changeGroup, loadOlder, older };
+  return { data: visibleData, selectedConversation, typing, setTyping, incoming, dismissIncoming: () => setIncoming(null), acknowledge, contacts, status, problem, send, react, directory, addContact, startDirect, createGroup, changeGroup, loadOlder, older };
 }

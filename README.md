@@ -4,6 +4,8 @@
 
 The final Windows-reference fidelity pass adds a single bottom Settings control, full in-app Settings, sidebar New Chat, and the reference composer arrangement. [Fidelity QA](docs/SIGNAL_FIDELITY_QA.md) records normalized measurements and regression evidence:37 browser tests passed, one desktop-specific scenario skipped on mobile,78 backend tests passed, lint/typecheck/build passed. All artwork is original; personal reference captures are excluded from Git.
 
+**Bonus A rollout was approved on 9 October 2026:** direct/group emoji reactions persist in SQLite and update live, with refresh/reconnect recovery. Public verification is a separate release gate after migration and both service deployments. Read the [reaction migration and release plan](docs/REACTIONS_MIGRATION_PLAN.md) before upgrading an existing database.
+
 Access the [public demo](https://frontend-production-5f84.up.railway.app/), [public repository](https://github.com/Harshpreet1729/scaler-signal-clone) and [backend health](https://backend-production-5383.up.railway.app/v1/health/live). The owner authorized the Phase 5 production rollout on 9 October; GitHub pushes deploy both existing services. The earlier [Phase 4 production verification](docs/RAILWAY_DEPLOYMENT.md) is historical evidence, not a Phase 5 test report.
 
 **Deadline: 9 October 2026, 6:00 PM IST (12:30 UTC).** This is an original interview assignment, not an official Signal client. **Demo OTP `123456` is public and impersonable. Use fictitious data only. There is no real end-to-end encryption.**
@@ -99,6 +101,7 @@ Browser `/api` routes map to fixed backend `/v1` routes. The gateway accepts no 
 | GET `/conversations/{id}/messages` | History: `limit` 1–100, mutually exclusive `before_id`/`after_id` |
 | POST `/conversations/{id}/messages` | Direct/group text: stable `client_message_id` UUID, nonblank `body` ≤4000 characters |
 | POST `/conversations/{id}/delivered`, `/read` | `message_ids`, 1–100; authenticated user's eligible original receipts only |
+| POST `/conversations/{id}/reactions` (Bonus A) | `message_id`, allowlisted `emoji`, boolean `active`; idempotently set the authenticated user's reaction |
 | POST `/auth/ws-ticket` | Session/CSRF-protected one-use ticket, 30 seconds |
 
 Username onboarding uses a five-minute, single-use challenge with at most five incorrect OTP attempts. Server rate limiting is process-local and shared behind the gateway; it is deliberately simple demo protection. Opaque session tokens are hashed in SQLite. The gateway stores the raw token only in a host-only HttpOnly, SameSite=Lax cookie, Secure on HTTPS, with seven-day expiry. Browser storage and URLs contain no long-lived session credential. Logout revokes that session and its sockets; independent sessions remain signed in.
@@ -109,9 +112,13 @@ REST and WS use the same send transaction. SQLite `BEGIN IMMEDIATE` serializes m
 
 The client merges by server ID/client UUID, retains monotonic receipt progress, and retries a failed send with the same UUID. Reconnect, foreground return and a 30-second visible-page repair refresh lists and selected loaded history, paging through missed messages/older receipts. Pending drafts survive retries in memory, not a full browser restart. Socket events are not a durable event log; REST repairs missed publication.
 
+Bonus A uses a six-choice reaction picker beside committed messages: 👍 ❤️ 😂 😮 😢 🙏. Desktop reveals its trigger on hover or keyboard focus; mobile keeps it visible. Chips beneath bubbles show counts and highlight your own selections; click a chip again to remove your reaction. Each user may select multiple different emojis. Escape/outside click closes the picker. Failed requests show an error without pretending a reaction was saved. The composer emoji control remains a separate, disabled placeholder.
+
+Reaction writes use the existing gateway, exact Origin, session CSRF, active-membership checks and mutation lock. `reaction.updated` broadcasts a committed message snapshot only to active, authenticated conversation members. A monotonic `reaction_version` prevents stale REST/receipt/WS snapshots from reverting reactions. History reconciliation repairs missed events, including previously loaded older messages. Removed members cannot react, read history or receive updates; their historical reactions remain, consistent with retained membership/history. Reactions do not change chat order, unread counts or receipts.
+
 ## Database and seed
 
-The unchanged Alembic revision is **0001**; Phase 5 needs no schema migration. Eight tables:
+Bonus A upgrades Alembic **0001 → 0002**, adding a ninth table and a default-zero `messages.reaction_version` column. The owner approved this additive production migration; startup runs it after the existing volume mounts.
 
 | Table | Purpose / key constraints |
 |---|---|
@@ -123,12 +130,15 @@ The unchanged Alembic revision is **0001**; Phase 5 needs no schema migration. E
 | `conversation_members` | Conversation/user composite key, role, join/removal time |
 | `messages` | Member sender FK, unique sender/client UUID, stable autoincrement history ID |
 | `message_receipts` | Message/recipient composite key and matching conversation FKs; read implies delivered |
+| `message_reactions` (Bonus A) | Primary key `(message_id,user_id,emoji)` prevents duplicates; composite message/member conversation FKs and six-emoji CHECK |
 
 Foreign keys, WAL, and a five-second busy timeout apply on every connection. Membership/activity/history/unread indexes support access patterns. See [schema rationale](docs/DATABASE_DESIGN.md); actual models are `backend/app/models.py`.
 
 Explicit `python -m app.seed` adds fictitious Alice/Bob/Carol/Dave accounts, six contacts, three conversations, seven memberships, six messages and eight illustrative receipt rows to a fresh migrated database. Seed IDs/UUIDs are stable; rerunning inserts nothing and preserves edits, membership changes and acknowledgments. Collisions fail instead of resetting data. Dave starts outside Weekend Plans; Alice is its admin. Never reset or automatically reseed the hosted database.
 
 ## Tests and local evidence
+
+Local Bonus A validation: **85 backend tests passed**, complete desktop/mobile Playwright **41 passed, 1 existing mobile skip**; final reaction/focus checks **4 passed**. Lint, TypeScript and production build passed. Tests cover idempotent/concurrent reactions, removed-member denial, stale events, reconnect/refresh, atomic migration failure/retry, and an actual backend process restart. Public verification follows migration and both service deployments.
 
 ```powershell
 # frontend/
@@ -146,8 +156,8 @@ Playwright starts real Next **3100** and FastAPI **8100**, explicitly migrates/s
 
 ## Deployment gate and limitations
 
-Phase 5 commit/push and rollout to the existing Railway services are authorized. Preserve the existing SQLite volume and all production variables. The [Railway plan](docs/RAILWAY_DEPLOY_PLAN.md) and [current service configuration](docs/RAILWAY_DEPLOYMENT.md) remain applicable: roots `/frontend` and `/backend`, frontend `npm run start:production`, backend `python -m app.startup`, Railway `PORT`, one worker/replica, `/data/signal.sqlite3`. Startup validates the mounted volume and runs Alembic **after mount**, before serving; migration failure stops startup. Do not seed on startup.
+The owner explicitly approved Bonus A commit/push and deployment on 9 October. Preserve the existing SQLite volume and all production variables. The [Railway plan](docs/RAILWAY_DEPLOY_PLAN.md) and [current service configuration](docs/RAILWAY_DEPLOYMENT.md) remain applicable: roots `/frontend` and `/backend`, frontend `npm run start:production`, backend `python -m app.startup`, Railway `PORT`, one worker/replica, `/data/signal.sqlite3`. Startup validates the mounted volume and runs Alembic **after mount**, before serving; migration failure stops startup. Do not seed on startup. Review the new migration plan for the rollback revision caveat.
 
 `BACKEND_BASE_URL` and the matching gateway key stay server-only. `NEXT_PUBLIC_WS_URL` is a credential-free WSS endpoint embedded during build. Exact HTTPS `FRONTEND_ORIGIN` must match both services. Budget remains $10/month with the existing hard limit unchanged; this rollout provisions no resources and changes no billing settings. Public verification must confirm the new release before declaring deployment complete.
 
-Calls, stories, linked devices and privacy/notification/appearance preferences remain labeled placeholders. Presence is mocked. Attachments, reactions, quoted replies, dark mode and disappearing messages are deferred. No real encryption is claimed. Phase 6 review and targeted polish are documented in `docs/PHASE_6_QA.md`; submitting both public URLs remains the owner's action. Do not submit automatically.
+Calls, stories, linked devices and privacy/notification/appearance preferences remain labeled placeholders. Presence is mocked. Attachments, quoted replies, dark mode and disappearing messages are deferred; only reactions are implemented in Bonus A. No real encryption is claimed. Phase 6 review and targeted polish are documented in `docs/PHASE_6_QA.md`; submitting both public URLs remains the owner's action. Do not submit automatically.

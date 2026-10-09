@@ -15,13 +15,13 @@ def counts(engine) -> dict:
 
 
 def test_migration_tables_pragmas_indexes_and_rerun(settings, engine):
-    assert set(inspect(engine).get_table_names()) == {"alembic_version", "users", "auth_challenges", "sessions", "contacts", "conversations", "conversation_members", "messages", "message_receipts"}
+    assert set(inspect(engine).get_table_names()) == {"alembic_version", "users", "auth_challenges", "sessions", "contacts", "conversations", "conversation_members", "messages", "message_receipts", "message_reactions"}
     for _ in range(2):
         with engine.connect() as connection:
             assert connection.scalar(text("PRAGMA foreign_keys")) == 1
             assert connection.scalar(text("PRAGMA journal_mode")) == "wal"
             assert connection.scalar(text("PRAGMA busy_timeout")) == 5000
-            assert connection.scalar(text("SELECT version_num FROM alembic_version")) == "0001"
+            assert connection.scalar(text("SELECT version_num FROM alembic_version")) == "0002"
             assert connection.execute(text("PRAGMA foreign_key_check")).all() == []
             assert "WHERE read_at IS NULL" in connection.scalar(text("SELECT sql FROM sqlite_master WHERE name='ix_receipts_unread'"))
     seed_database(settings)

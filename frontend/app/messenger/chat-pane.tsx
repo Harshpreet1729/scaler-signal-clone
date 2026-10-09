@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { Icon } from "./icons";
 import { Avatar, IconButton, Receipt } from "./primitives";
-import type { ChatMessage, Conversation, Person, SendMessage } from "./types";
+import { MessageReactions } from "./message-reactions";
+import type { ChatMessage, Conversation, Person, ReactToMessage, SendMessage } from "./types";
 
 export function Composer({ conversationId, onSend, onUnavailable, onTyping }: { conversationId: string; onSend?: SendMessage; onUnavailable: (message: string) => void; onTyping: (id: string, value: boolean) => void }) {
   const [draft, setDraft] = useState("");
@@ -38,22 +39,23 @@ export function Composer({ conversationId, onSend, onUnavailable, onTyping }: { 
   </div>;
 }
 
-function MessageBubble({ message, previous, next, person, isGroup }: { message: ChatMessage; previous?: ChatMessage; next?: ChatMessage; person: Person; isGroup: boolean }) {
+function MessageBubble({ message, previous, next, person, isGroup, userId, onReact, onError }: { message: ChatMessage; previous?: ChatMessage; next?: ChatMessage; person: Person; isGroup: boolean; userId: number; onReact: (messageId: string, emoji: string, active: boolean) => Promise<void>; onError: (message: string) => void }) {
   const startsGroup = previous?.sender !== message.sender || previous?.date !== message.date;
   const endsGroup = next?.sender !== message.sender || next?.date !== message.date;
   const outgoing = message.direction === "outgoing";
   return <div data-message-id={message.id} data-unread={message.unread ? "true" : undefined} className={"message-row " + message.direction + (startsGroup ? " group-start" : "") + (endsGroup ? " group-end" : "")}>
     {!outgoing && isGroup && <span className={"sender-avatar " + (!endsGroup ? "avatar-spacer" : "")}><Avatar avatar={person.avatar} name={person.name} size={28} /></span>}
-    <div className="message-bubble">
+    <div className="message-stack"><div className="message-bubble">
       {!outgoing && isGroup && startsGroup && <span className="sender-name" style={{ color: person.color }}>{person.name}</span>}
       <span className="message-body">{message.body}</span><span className="message-meta"><time>{message.time}</time>{outgoing && message.receipt && <Receipt state={message.receipt} />}</span>
-    </div>
+    </div>{Number(message.id) > 0 && <MessageReactions reactions={message.reactions ?? []} userId={userId} onReact={(emoji, active) => onReact(message.id, emoji, active)} onError={onError} />}</div>
   </div>;
 }
 
-export function ChatPane({ active = true, conversation, messages, people, onBack, onDetails, onSearch, onMenu, onUnavailable, onNew, onSend, onLoadOlder, hasOlder, onRead, onTyping, typingNames }: {
+export function ChatPane({ active = true, conversation, messages, people, userId, onReact, onBack, onDetails, onSearch, onMenu, onUnavailable, onNew, onSend, onLoadOlder, hasOlder, onRead, onTyping, typingNames }: {
   active?: boolean;
   conversation?: Conversation; messages: readonly ChatMessage[]; people: Readonly<Record<string, Person>>;
+  userId: number; onReact: ReactToMessage;
   onBack: () => void; onDetails: () => void; onSearch: () => void; onMenu: () => void; onUnavailable: (text: string) => void; onNew: () => void; onSend?: SendMessage;
   onTyping: (id: string, value: boolean) => void; typingNames: string[];
   onRead: (id: string, ids: number[], read: boolean) => Promise<void>;
@@ -103,7 +105,7 @@ export function ChatPane({ active = true, conversation, messages, people, onBack
       }}>Load older messages</button>}
       <div className="history-content">{messages.map((message, index) => <div key={message.id}>
         {messages[index - 1]?.date !== message.date && <div className="date-separator"><span>{message.date}</span></div>}
-        <MessageBubble message={message} previous={messages[index - 1]} next={messages[index + 1]} person={people[message.sender] ?? { id: message.sender, name: "Member", username: "member", avatar: "sky", color: "#707070" }} isGroup={conversation.kind === "group"} />
+        <MessageBubble message={message} previous={messages[index - 1]} next={messages[index + 1]} person={people[message.sender] ?? { id: message.sender, name: "Member", username: "member", avatar: "sky", color: "#707070" }} isGroup={conversation.kind === "group"} userId={userId} onReact={(messageId, emoji, value) => onReact(conversation.id, messageId, emoji, value)} onError={onUnavailable} />
       </div>)}</div>
     </div>
     {typingNames.length > 0 && <div className="typing-indicator" role="status">{typingNames.join(", ")}{typingNames.length === 1 ? " is" : " are"} typing…</div>}

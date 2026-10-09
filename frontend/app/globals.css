@@ -77,6 +77,24 @@ svg { flex-shrink: 0; vertical-align: middle; }
 .message-row.outgoing { justify-content: flex-end; }
 .message-bubble { max-width: min(580px, 80%); background: #eaeaea; border-radius: 17px; padding: 8px 12px; font-size: 14px; line-height: 1.45; overflow-wrap: anywhere; }
 .outgoing .message-bubble { background: var(--blue); color: white; }
+.message-stack { position: relative; max-width: min(580px, 80%); min-width: 0; display: flex; flex-direction: column; align-items: flex-start; }
+.message-stack .message-bubble { max-width: 100%; }
+.outgoing .message-stack { align-items: flex-end; }
+.message-reactions { max-width: 100%; display: flex; flex-direction: column; gap: 3px; }
+.outgoing .message-reactions { align-items: flex-end; }
+.reaction-chips { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
+.outgoing .reaction-chips { justify-content: flex-end; }
+.reaction-chip { display: inline-flex; gap: 5px; align-items: center; min-height: 26px; margin-top: 3px; padding: 2px 8px; border: 1px solid #dedede; border-radius: 14px; background: #fff; font-size: 12px; }
+.reaction-chip[aria-pressed="true"] { border-color: #8eaffc; background: #e9efff; color: #204fa8; }
+.reaction-trigger { position: absolute; right: -30px; bottom: 4px; width: 26px; height: 26px; border-radius: 50%; color: #737373; display: grid; place-items: center; opacity: 0; }
+.outgoing .reaction-trigger { right: auto; left: -30px; }
+.sender-avatar + .message-stack { max-width: min(580px, calc(100% - 70px)); }
+.message-row:hover .reaction-trigger, .message-row:focus-within .reaction-trigger, .reaction-trigger[aria-expanded="true"] { opacity: 1; }
+.reaction-trigger:hover { background: #e7e7e7; }
+.reaction-picker { display: flex; flex-wrap: wrap; gap: 2px; padding: 5px; margin-top: 4px; background: #fff; border: 1px solid var(--line); border-radius: 22px; box-shadow: 0 3px 12px #00000018; max-width: 242px; }
+.reaction-picker button { width: 34px; height: 34px; border-radius: 50%; font-size: 22px; display: grid; place-items: center; }
+.reaction-picker button:hover, .reaction-picker button[aria-pressed="true"] { background: #e9efff; }
+@media (max-width: 700px), (hover: none) { .reaction-trigger { opacity: 1; } .message-stack { max-width: 85%; } }
 .incoming:not(.group-start) .message-bubble { border-top-left-radius: 5px; }
 .incoming:not(.group-end) .message-bubble { border-bottom-left-radius: 5px; }
 .outgoing:not(.group-start) .message-bubble { border-top-right-radius: 5px; }
