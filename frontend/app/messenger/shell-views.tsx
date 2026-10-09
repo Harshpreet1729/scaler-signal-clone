@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Icon, type IconName } from "./icons";
 import { Avatar, IconButton } from "./primitives";
 import type { Profile } from "./types";
-import type { ApiUser } from "./use-chat-data";
+import { chatApi, type ApiUser } from "./use-chat-data";
+import { AvatarPicker } from "./avatar-picker";
 
 const categories: { name: string; icon: IconName }[] = [
   { name: "Account", icon: "account" }, { name: "General", icon: "settings" },
@@ -16,7 +17,44 @@ function Setting({ label, detail, checked = false }: { label: string; detail: st
   return <label className="settings-row"><span>{label}<small>{detail}</small></span><input className="setting-toggle" type="checkbox" checked={checked} disabled aria-label={label + " (preview)"} /></label>;
 }
 
-export function SettingsView({ profile, onLogout, busy }: { profile: Profile; onLogout: () => void; busy: boolean }) {
+function ProfileEditor({ profile, csrf, onProfileChange, busy: signingOut }: { profile: Profile; csrf: string; onProfileChange: (user: Profile) => void; busy: boolean }) {
+  const [name, setName] = useState(profile.display_name);
+  const [avatar, setAvatar] = useState(profile.avatar_key);
+  const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState("");
+  const [error, setError] = useState("");
+  const nameInput = useRef<HTMLInputElement>(null);
+  const dirty = name !== profile.display_name || avatar !== profile.avatar_key;
+  const busy = saving || signingOut;
+  function cancel() { setName(profile.display_name); setAvatar(profile.avatar_key); setError(""); setNotice(""); nameInput.current?.focus(); }
+  async function save(event: FormEvent) {
+    event.preventDefault();
+    if (busy) return;
+    setNotice(""); setError("");
+    const displayName = name.trim();
+    if (!displayName || Array.from(displayName).length > 80) { setError("Use a display name of 1–80 characters, excluding surrounding spaces."); nameInput.current?.focus(); return; }
+    setSaving(true);
+    try {
+      const response = await chatApi<{ user: Profile }>("/api/users/me", csrf, { display_name: displayName, avatar_key: avatar }, "PATCH");
+      onProfileChange(response.user); setName(response.user.display_name); setAvatar(response.user.avatar_key); setNotice("Profile saved.");
+    } catch (problem) { setError(problem instanceof Error ? problem.message : "Could not save your profile. Try again."); }
+    finally { setSaving(false); requestAnimationFrame(() => nameInput.current?.focus()); }
+  }
+  return <form className="profile-editor" onSubmit={save} aria-label="Edit profile" aria-busy={saving} noValidate>
+    <div className="settings-profile"><Avatar avatar={avatar} name={avatar} size={76} /><p>Preset demo avatar</p></div>
+    <div className="settings-card profile-editor-card">
+      <label htmlFor="profile-name">Display name</label>
+      <input ref={nameInput} id="profile-name" value={name} onChange={event => { setName(event.target.value); setNotice(""); setError(""); }} maxLength={160} autoComplete="nickname" required disabled={busy} aria-invalid={Boolean(error) && (!name.trim() || Array.from(name.trim()).length > 80)} aria-describedby="profile-name-help" />
+      <p id="profile-name-help" className="hint">1–80 characters. Use a fictitious name for this public demo.</p>
+      <AvatarPicker value={avatar} onChange={value => { setAvatar(value); setNotice(""); }} disabled={busy} />
+    </div>
+    <p className="settings-helper">Your name and avatar are visible to people you message.</p>
+    <div className="profile-editor-actions"><button className="secondary-button" type="button" onClick={cancel} disabled={busy || !dirty}>Cancel</button><button className="primary-button" type="submit" disabled={busy || !dirty}>{saving ? "Saving…" : "Save"}</button></div>
+    {error && <p className="error" role="alert">{error}</p>}{notice && <p className="profile-saved" role="status">{notice}</p>}
+  </form>;
+}
+
+export function SettingsView({ profile, csrf, onProfileChange, onLogout, busy }: { profile: Profile; csrf: string; onProfileChange: (user: Profile) => void; onLogout: () => void; busy: boolean }) {
   const [category, setCategory] = useState("Profile");
   const [detailOpen, setDetailOpen] = useState(false);
   const detailHeading = useRef<HTMLHeadingElement>(null);
@@ -34,9 +72,7 @@ export function SettingsView({ profile, onLogout, busy }: { profile: Profile; on
       <header className="settings-page-header"><IconButton className="mobile-back" icon="back" label="Back to Settings" onClick={() => { setDetailOpen(false); requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('.settings-nav button[aria-pressed="true"], .settings-account[aria-pressed="true"]')?.focus()); }} /><h2 ref={detailHeading} tabIndex={-1}>{category}</h2></header>
       <div className="settings-detail">
         {category === "Profile" ? <>
-          <div className="settings-profile"><Avatar avatar={profile.avatar_key} name={profile.avatar_key} size={76} /><p>Preset demo avatar</p></div>
-          <div className="settings-card"><div className="profile-field"><Icon name="user" size={20} /><span>{profile.display_name}<small>Display name</small></span></div><div className="profile-field"><Icon name="info" size={20} /><span>Fictitious demo account</span></div></div>
-          <p className="settings-helper">Your profile is visible to people you message. Profile editing is not available in this view.</p>
+          <ProfileEditor profile={profile} csrf={csrf} onProfileChange={onProfileChange} busy={busy} />
           <div className="settings-card"><div className="profile-field"><Icon name="at" size={20} /><span>Username<small>@{profile.username}</small></span></div></div>
           <p className="settings-helper">People can find this demo account by username. Your session stays signed in after a reload.</p>
           <button className="secondary-button logout-button" onClick={onLogout} disabled={busy}><Icon name="logout" size={18} />{busy ? "Logging out…" : "Log out"}</button>

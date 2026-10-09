@@ -4,9 +4,9 @@ import { useEffect, useState, type FormEvent } from "react";
 import Messenger from "./messenger/messenger";
 import { Icon } from "./messenger/icons";
 import type { Profile } from "./messenger/types";
+import { AvatarPicker } from "./messenger/avatar-picker";
 
 type SignedIn = { user: Profile; csrf_token: string; expires_at: number };
-const avatars = ["sky", "fern", "sun", "clay"] as const;
 
 class AuthError extends Error {
   constructor(message: string, readonly code: string) { super(message); }
@@ -75,7 +75,8 @@ export default function Onboarding({ restoreSession }: { restoreSession: boolean
   }
 
   if (loading) return <main className="auth-loading"><Icon name="chat" size={44} /><p role="status">Restoring your session…</p></main>;
-  if (signedIn) return <Messenger profile={signedIn.user} csrf={signedIn.csrf_token} onLogout={logout} busy={busy} error={error} />;
+  if (signedIn) return <Messenger profile={signedIn.user} csrf={signedIn.csrf_token} onLogout={logout} busy={busy} error={error}
+    onProfileChange={user => setSignedIn(current => current?.user.id === user.id ? { ...current, user } : current)} />;
 
   return (
     <main className="auth-page">
@@ -94,16 +95,7 @@ export default function Onboarding({ restoreSession }: { restoreSession: boolean
             {mode === "register" && <>
               <label htmlFor="display-name">Display name</label>
               <input id="display-name" value={displayName} onChange={(event) => setDisplayName(event.target.value)} required maxLength={80} autoComplete="nickname" disabled={busy} />
-              <fieldset disabled={busy}>
-                <legend>Choose an avatar</legend>
-                <div className="avatars">{avatars.map((key) => (
-                  <label key={key} className="avatar-choice">
-                    <input type="radio" name="avatar" value={key} checked={avatar === key} onChange={() => setAvatar(key)} />
-                    <img src={"/avatars/" + key + ".svg"} width="44" height="44" alt="" />
-                    <span>{key[0].toUpperCase() + key.slice(1)}</span>
-                  </label>
-                ))}</div>
-              </fieldset>
+              <AvatarPicker value={avatar} onChange={setAvatar} disabled={busy} />
             </>}
             <label htmlFor="otp">Demo OTP</label>
             <input id="otp" value={otp} onChange={(event) => setOtp(event.target.value)} required pattern="[0-9]{6}" minLength={6} maxLength={6} inputMode="numeric" autoComplete="one-time-code" disabled={busy} />

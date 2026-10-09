@@ -351,6 +351,7 @@ export function useChatData(profile: Profile, csrf: string, query: string, unrea
   const data = useMemo<MessengerData>(() => {
     const people: Record<string, Person> = { [profile.id]: { id: String(profile.id), name: profile.display_name, username: profile.username, avatar: profile.avatar_key, color: color(profile.id) } };
     for (const user of [...contacts, ...conversations.flatMap(item => item.members)]) {
+      if (user.id === profile.id) continue; // The signed-in profile is fresher than cached group members.
       people[user.id] = { id: String(user.id), name: user.display_name, username: user.username, avatar: user.avatar_key, color: color(user.id) };
     }
     const rows: Conversation[] = conversations.map(item => ({ id: String(item.id), name: item.name, kind: item.kind, avatar: item.avatar_key,

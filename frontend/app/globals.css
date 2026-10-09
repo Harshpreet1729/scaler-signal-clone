@@ -200,6 +200,18 @@ svg { flex-shrink: 0; vertical-align: middle; }
 .profile-field { display: flex; align-items: center; gap: 14px; min-height: 42px; padding: 9px 0; overflow-wrap: anywhere; }
 .profile-field small { display: block; color: var(--muted); font-size: 11px; margin-top: 2px; }
 .settings-helper { margin: 7px 16px 22px; }
+.profile-editor { margin-bottom: 22px; }
+.profile-editor-card { padding: 20px; }
+.profile-editor-card > label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 7px; }
+.profile-editor-card > input { width: 100%; padding: 10px 12px; border: 1px solid #c9c9c9; border-radius: 8px; min-height: 42px; }
+.avatar-picker { border: 0; padding: 0; margin: 20px 0 0; min-width: 0; }
+.avatar-picker legend { font-size: 13px; font-weight: 600; margin-bottom: 12px; }
+.avatar-choice { padding: 8px 2px; border-radius: 12px; border: 1px solid transparent; }
+.avatar-choice:has(input:checked) { background: #edf3ff; border-color: #a5bff8; }
+.avatar-choice:focus-within { outline: 2px solid var(--blue); outline-offset: 2px; }
+.profile-editor-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.profile-editor > .error, .profile-saved { margin-top: 12px; }
+.profile-saved { color: #32664c; font-size: 13px; }
 .settings-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 16px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
 .settings-row:last-child { border-bottom: 0; }
 .settings-row small { color: var(--muted); font-size: 12px; display: block; margin-top: 3px; line-height: 1.5; }

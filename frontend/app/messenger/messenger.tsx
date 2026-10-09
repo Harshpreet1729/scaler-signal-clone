@@ -9,9 +9,9 @@ import { NewChatSidebar, SettingsView } from "./shell-views";
 import type { Profile } from "./types";
 import { useChatData } from "./use-chat-data";
 
-type Props = { profile: Profile; csrf: string; onLogout: () => void; busy: boolean; error: string };
+type Props = { profile: Profile; csrf: string; onLogout: () => void; busy: boolean; error: string; onProfileChange: (user: Profile) => void };
 
-export default function Messenger({ profile, csrf, onLogout, busy, error }: Props) {
+export default function Messenger({ profile, csrf, onLogout, busy, error, onProfileChange }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState<{ conversationId: string | null; query: string }>({ conversationId: null, query: "" });
   const [searchSidebarOpen, setSearchSidebarOpen] = useState(false);
@@ -70,7 +70,7 @@ export default function Messenger({ profile, csrf, onLogout, busy, error }: Prop
   return <main className={"messenger " + (conversation && screen === "chats" ? "chat-selected " : "") + (conversation && searchSidebarOpen && screen === "chats" ? "search-sidebar-open " : "") + (screen === "settings" ? "settings-selected" : "")} aria-label="Messenger" data-username={profile.username}
     onKeyDown={event => { if (event.key !== "Escape" || dialog || menu) return; if (scope && screen === "chats") { event.preventDefault(); clearScope(); } else if (screen !== "chats") { event.preventDefault(); returnToChats(); } }}>
     <NavigationRail settings={screen === "settings"} onSettings={() => open("settings")} onMenu={() => setMenu(menu === "rail" ? null : "rail")} onPlaceholder={name => open(name as "Calls" | "Stories")} onChats={() => { if (screen === "chats") closeConversation(); else returnToChats(); }} />
-    {screen === "settings" ? <SettingsView profile={profile} onLogout={onLogout} busy={busy} /> : screen === "new-chat" ?
+    {screen === "settings" ? <SettingsView profile={profile} csrf={csrf} onProfileChange={onProfileChange} onLogout={onLogout} busy={busy} /> : screen === "new-chat" ?
       <NewChatSidebar contacts={contacts} directory={directory} startDirect={startDirect} onSelect={select} onBack={returnToChats} onGroup={() => open("new-group")} onContact={() => open("new-contact")} /> :
       <ConversationSidebar conversations={data.conversations} selectedId={selectedId} query={search.query} unreadOnly={unreadOnly} onQuery={query => setSearch(current => ({ ...current, query }))} onUnread={setUnreadOnly}
         onSelect={id => { if (scope) clearScope(); setSelectedId(id); setSearchSidebarOpen(false); setMessageTarget(null); }} onNew={() => open("new-chat")} onMenu={() => setMenu(menu === "list" ? null : "list")}
