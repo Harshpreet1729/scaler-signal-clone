@@ -1,5 +1,7 @@
 # Phase 4 production deployment — 9 October 2026
 
+> **HISTORICAL — phase/release record.** Scope, approvals, test counts, database revisions and pending gates below describe that release, not the finished application. See the [current README](../README.md) and [final verification](FINAL_VERIFICATION.md) for shipped features and latest results. This record is retained as evidence, not a new execution instruction.
+
 This is the authorized early deployment, not completion of Phase 5 or the full assignment. Both services use Railway; previous Netlify proposals are superseded. No subscription upgrade, billing-limit change or existing-project redeployment occurred.
 
 ## Public endpoints and source

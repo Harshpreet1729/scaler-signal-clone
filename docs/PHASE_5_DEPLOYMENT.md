@@ -1,5 +1,7 @@
 # Phase 5 production review — 9 October 2026
 
+> **HISTORICAL — phase/release record.** Scope, approvals, test counts, database revisions and pending gates below describe that release, not the finished application. See the [current README](../README.md) and [final verification](FINAL_VERIFICATION.md) for shipped features and latest results. This record is retained as evidence, not a new execution instruction.
+
 Verified application commit: `4bd7cb308bc1da7b7f4ca82e230b9f4b395e8681`, pushed to public main. This post-deployment evidence file was initially local; it is published with the authorized Phase 6 fixes. All results below describe the actual Phase 5 production run.
 
 - Repository: https://github.com/Harshpreet1729/scaler-signal-clone

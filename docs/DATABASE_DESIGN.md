@@ -1,6 +1,12 @@
 # Relational database proposal
 
-Status: design only, awaiting approval. SQLite + SQLAlchemy + Alembic. All times are server-generated UTC epoch milliseconds; identifiers are integer primary keys unless noted. Enable foreign keys on every connection. No account/message hard-deletion feature is planned; preserve referenced records.
+> **HISTORICAL — original Phase 0 schema proposal.** The relational schema is implemented with SQLite, SQLAlchemy and Alembic. See [actual models](../backend/app/models.py), [migration files](../backend/alembic/versions/), the [current README](../README.md#relational-storage) and [final verification](FINAL_VERIFICATION.md). The original approval wording below is preserved as planning history.
+
+Current schema: revision `0001` created the eight base tables below; additive revision `0002` adds `messages.reaction_version` and `message_reactions`, with unique `(message_id, user_id, emoji)`, composite message/member foreign keys, an emoji allowlist and a member lookup index. Groups, receipts, profiles and reactions persist on Railway's `/data` volume. Full-history access for active group members and fixed send-time receipt cohorts were approved and implemented. See [reaction migration and safe rollback](REACTIONS_MIGRATION_PLAN.md).
+
+## Original proposal (historical)
+
+Original Phase 0 status: design only, awaiting approval. SQLite + SQLAlchemy + Alembic. All times are server-generated UTC epoch milliseconds; identifiers are integer primary keys unless noted. Enable foreign keys on every connection. No account/message hard-deletion feature is planned; preserve referenced records.
 
 ## Tables and reasons
 

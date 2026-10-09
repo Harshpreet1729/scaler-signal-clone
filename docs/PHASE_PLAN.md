@@ -1,6 +1,8 @@
 # Approval-gated plan and risks
 
-Status: Phase 0 documentation delivered for review; implementation not authorized. Initial workspace contained only AGENTS.md and the four-page assignment PDF. All phase transitions require a new explicit user instruction.
+> **HISTORICAL — original approval-gated plan.** The application is built, deployed and verified; the plan and original next-phase prompt below are retained as history, not outstanding work. Railway deployment was explicitly authorized early, followed by groups/receipts/typing, visual QA, reactions, profile/search polish and final documentation. See the [current README](../README.md) and [final verification](FINAL_VERIFICATION.md). Owner submission remains manual; deadline: **9 October 2026, 18:00 IST**.
+
+Original Phase 0 status: documentation delivered for review; implementation was not yet authorized. Initial workspace contained only AGENTS.md and the four-page assignment PDF. All phase transitions require a new explicit user instruction.
 
 ## Dependency order and completion gates
 

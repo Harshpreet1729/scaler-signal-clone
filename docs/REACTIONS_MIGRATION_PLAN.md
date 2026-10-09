@@ -1,5 +1,7 @@
 # Bonus A: reaction migration and release gate
 
+> **HISTORICAL — phase/release record.** Scope, approvals, test counts, database revisions and pending gates below describe that release, not the finished application. See the [current README](../README.md) and [final verification](FINAL_VERIFICATION.md) for shipped features and latest results. This record is retained as evidence, not a new execution instruction.
+
 Scope: only emoji reactions. Code is based on approved fidelity commit `727b14935d442923db2694831222567caab390f1`. The owner explicitly approved commit/push, deployment and additive production migration on 9 October 2026. Reset, reseed, billing changes and other-project modifications remain forbidden.
 
 ## Backup gate completed before local migrations

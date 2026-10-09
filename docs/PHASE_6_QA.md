@@ -1,5 +1,7 @@
 # Phase 6 submission QA — 9 October 2026
 
+> **HISTORICAL — phase/release record.** Scope, approvals, test counts, database revisions and pending gates below describe that release, not the finished application. See the [current README](../README.md) and [final verification](FINAL_VERIFICATION.md) for shipped features and latest results. This record is retained as evidence, not a new execution instruction.
+
 Scope: final review and small fixes over approved Phase5 commit `4bd7cb308bc1da7b7f4ca82e230b9f4b395e8681`. No new feature, dependency, backend/auth/database/migration change, resource provision or other-project operation. Local candidate passes; final production commit must pass the short public smoke before the owner receives GO. The post-push smoke results and screenshots are retained outside Git and included in the completion report, avoiding a second documentation-only deployment.
 
 ## Reference comparison and findings

@@ -1,5 +1,7 @@
 # Phase 0 Review and Scoped Approval
 
+> **HISTORICAL — phase/release record.** Scope, approvals, test counts, database revisions and pending gates below describe that release, not the finished application. See the [current README](../README.md) and [final verification](FINAL_VERIFICATION.md) for shipped features and latest results. This record is retained as evidence, not a new execution instruction.
+
 Project: Scaler SDE Fullstack Assignment, Signal Clone
 Review date: 2026-10-08
 Status: **Approved to proceed to Phase 1 only.** This is a technical review recommendation for the project owner to adopt, not authorization to commit, publish, deploy or spend money.

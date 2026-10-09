@@ -1,5 +1,7 @@
 # Phase 4 handoff
 
+> **HISTORICAL — phase/release record.** Scope, approvals, test counts, database revisions and pending gates below describe that release, not the finished application. See the [current README](../README.md) and [final verification](FINAL_VERIFICATION.md) for shipped features and latest results. This record is retained as evidence, not a new execution instruction.
+
 Status: **Phase 4 validation passed on 9 October 2026 (IST); ready for user approval.** Stop here. Phase 5 has not started. Deadline remains 9 October 2026, 6:00 PM IST.
 
 ## Implemented
@@ -103,15 +105,15 @@ Local review servers were left running after validation (backend exec session 44
 
 Final captures are outside the repository:
 
-- [Alice live exchange](C:/Users/HarshPC/.codex/visualizations/2026/10/08/01a11b98-36ec-7431-a3fd-6f185920e179/phase-4/desktop-alice-live.png)
-- [Bob live exchange](C:/Users/HarshPC/.codex/visualizations/2026/10/08/01a11b98-36ec-7431-a3fd-6f185920e179/phase-4/desktop-bob-live.png)
-- [Desktop direct 1440×900](C:/Users/HarshPC/.codex/visualizations/2026/10/08/01a11b98-36ec-7431-a3fd-6f185920e179/phase-4/desktop-direct-1440.png)
-- [Desktop group 1440×900](C:/Users/HarshPC/.codex/visualizations/2026/10/08/01a11b98-36ec-7431-a3fd-6f185920e179/phase-4/desktop-group-1440.png)
-- [Group details](C:/Users/HarshPC/.codex/visualizations/2026/10/08/01a11b98-36ec-7431-a3fd-6f185920e179/phase-4/desktop-members.png)
-- [Settings](C:/Users/HarshPC/.codex/visualizations/2026/10/08/01a11b98-36ec-7431-a3fd-6f185920e179/phase-4/desktop-settings.png)
-- [Mobile live exchange](C:/Users/HarshPC/.codex/visualizations/2026/10/08/01a11b98-36ec-7431-a3fd-6f185920e179/phase-4/mobile-alice-live.png)
-- [Mobile list](C:/Users/HarshPC/.codex/visualizations/2026/10/08/01a11b98-36ec-7431-a3fd-6f185920e179/phase-4/mobile-list.png)
-- [Mobile group](C:/Users/HarshPC/.codex/visualizations/2026/10/08/01a11b98-36ec-7431-a3fd-6f185920e179/phase-4/mobile-group.png)
+- `Alice live exchange` (local-only evidence; not published)
+- `Bob live exchange` (local-only evidence; not published)
+- `Desktop direct 1440×900` (local-only evidence; not published)
+- `Desktop group 1440×900` (local-only evidence; not published)
+- `Group details` (local-only evidence; not published)
+- `Settings` (local-only evidence; not published)
+- `Mobile live exchange` (local-only evidence; not published)
+- `Mobile list` (local-only evidence; not published)
+- `Mobile group` (local-only evidence; not published)
 
 The final group captures wait for loaded history. Visual approximations remain the ones approved for Phase 3; Phase 4 preserved that layout and avatar treatment.
 

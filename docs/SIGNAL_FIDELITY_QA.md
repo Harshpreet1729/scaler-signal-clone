@@ -1,5 +1,7 @@
 # Final Signal Desktop fidelity pass — 9 October 2026
 
+> **HISTORICAL — phase/release record.** Scope, approvals, test counts, database revisions and pending gates below describe that release, not the finished application. See the [current README](../README.md) and [final verification](FINAL_VERIFICATION.md) for shipped features and latest results. This record is retained as evidence, not a new execution instruction.
+
 Baseline / rollback: `86e51c112036a1ce676d8ce65527ac8939df4da6`. User-supplied Windows captures R1–R7 are the primary reference. All seven were opened before editing. Personal screenshots remain outside this repository; no contact content is transcribed. Original components/icons only, no Signal source or artwork copied.
 
 ## Scale and pre-change audit

@@ -1,5 +1,7 @@
 # Phase 5 handoff — 9 October 2026
 
+> **HISTORICAL — phase/release record.** Scope, approvals, test counts, database revisions and pending gates below describe that release, not the finished application. See the [current README](../README.md) and [final verification](FINAL_VERIFICATION.md) for shipped features and latest results. This record is retained as evidence, not a new execution instruction.
+
 Status: implementation and local validation complete. The owner's resumed instruction explicitly authorizes commit/push, deployment to the existing Signal services and public multi-user/persistence QA. No new migration, seed, volume reset, resource provision or billing change is needed. Branch `main`, starting HEAD `67b9ff5abf43f8bc16fd7d3f1e239169ae1a7d1e`. User-created `PHASE_4_DEPLOYMENT_APPROVAL.md` preserved. Deployment results will be recorded separately after actual public checks.
 
 ## Implemented

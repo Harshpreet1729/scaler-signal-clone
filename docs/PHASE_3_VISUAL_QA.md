@@ -1,5 +1,7 @@
 # Phase 3 visual QA
 
+> **HISTORICAL — phase/release record.** Scope, approvals, test counts, database revisions and pending gates below describe that release, not the finished application. See the [current README](../README.md) and [final verification](FINAL_VERIFICATION.md) for shipped features and latest results. This record is retained as evidence, not a new execution instruction.
+
 Date: 8 October 2026. Status: implementation and checks complete; awaiting the user's Phase 3 visual acceptance. No Phase 4 work authorized or performed.
 
 ## Scope and preservation
@@ -86,21 +88,21 @@ All paths below are absolute local QA artifacts. Final captures are from the suc
 
 | Capture | Viewport | Exact path |
 |---|---|---|
-| Official reference | 804×490 source image | [official-windows-reference.png](C:/Users/HarshPC/.codex/visualizations/2026/10/08/01a11b98-36ec-7431-a3fd-6f185920e179/phase-3/official-windows-reference.png) |
-| Direct chat | 1440×900 | [desktop-direct-1440.png](C:/Users/HarshPC/.codex/visualizations/2026/10/08/01a11b98-36ec-7431-a3fd-6f185920e179/phase-3/desktop-direct-1440.png) |
-| Group chat | 1440×900 | [desktop-group-1440.png](C:/Users/HarshPC/.codex/visualizations/2026/10/08/01a11b98-36ec-7431-a3fd-6f185920e179/phase-3/desktop-group-1440.png) |
-| Empty state | 1440×900 | [desktop-empty-1440.png](C:/Users/HarshPC/.codex/visualizations/2026/10/08/01a11b98-36ec-7431-a3fd-6f185920e179/phase-3/desktop-empty-1440.png) |
-| Settings / privacy | 1440×900 | [desktop-settings.png](C:/Users/HarshPC/.codex/visualizations/2026/10/08/01a11b98-36ec-7431-a3fd-6f185920e179/phase-3/desktop-settings.png) |
-| Group creation dialog | 1440×900 | [desktop-new-group.png](C:/Users/HarshPC/.codex/visualizations/2026/10/08/01a11b98-36ec-7431-a3fd-6f185920e179/phase-3/desktop-new-group.png) |
-| Group members | 1440×900 | [desktop-members.png](C:/Users/HarshPC/.codex/visualizations/2026/10/08/01a11b98-36ec-7431-a3fd-6f185920e179/phase-3/desktop-members.png) |
-| Group medium desktop | 1280×800 | [group-1280x800.png](C:/Users/HarshPC/.codex/visualizations/2026/10/08/01a11b98-36ec-7431-a3fd-6f185920e179/phase-3/group-1280x800.png) |
-| Group small desktop | 1024×768 | [group-1024x768.png](C:/Users/HarshPC/.codex/visualizations/2026/10/08/01a11b98-36ec-7431-a3fd-6f185920e179/phase-3/group-1024x768.png) |
-| Mobile list | 390×844 | [mobile-list.png](C:/Users/HarshPC/.codex/visualizations/2026/10/08/01a11b98-36ec-7431-a3fd-6f185920e179/phase-3/mobile-list.png) |
-| Mobile direct | 390×844 | [mobile-direct.png](C:/Users/HarshPC/.codex/visualizations/2026/10/08/01a11b98-36ec-7431-a3fd-6f185920e179/phase-3/mobile-direct.png) |
-| Mobile group | 390×844 | [mobile-group.png](C:/Users/HarshPC/.codex/visualizations/2026/10/08/01a11b98-36ec-7431-a3fd-6f185920e179/phase-3/mobile-group.png) |
-| Mobile settings | 390×844 | [mobile-settings.png](C:/Users/HarshPC/.codex/visualizations/2026/10/08/01a11b98-36ec-7431-a3fd-6f185920e179/phase-3/mobile-settings.png) |
-| Mobile group creation | 390×844 | [mobile-new-group.png](C:/Users/HarshPC/.codex/visualizations/2026/10/08/01a11b98-36ec-7431-a3fd-6f185920e179/phase-3/mobile-new-group.png) |
-| Mobile members | 390×844 | [mobile-members.png](C:/Users/HarshPC/.codex/visualizations/2026/10/08/01a11b98-36ec-7431-a3fd-6f185920e179/phase-3/mobile-members.png) |
+| Official reference | 804×490 source image | `official-windows-reference.png` (local-only evidence; not published) |
+| Direct chat | 1440×900 | `desktop-direct-1440.png` (local-only evidence; not published) |
+| Group chat | 1440×900 | `desktop-group-1440.png` (local-only evidence; not published) |
+| Empty state | 1440×900 | `desktop-empty-1440.png` (local-only evidence; not published) |
+| Settings / privacy | 1440×900 | `desktop-settings.png` (local-only evidence; not published) |
+| Group creation dialog | 1440×900 | `desktop-new-group.png` (local-only evidence; not published) |
+| Group members | 1440×900 | `desktop-members.png` (local-only evidence; not published) |
+| Group medium desktop | 1280×800 | `group-1280x800.png` (local-only evidence; not published) |
+| Group small desktop | 1024×768 | `group-1024x768.png` (local-only evidence; not published) |
+| Mobile list | 390×844 | `mobile-list.png` (local-only evidence; not published) |
+| Mobile direct | 390×844 | `mobile-direct.png` (local-only evidence; not published) |
+| Mobile group | 390×844 | `mobile-group.png` (local-only evidence; not published) |
+| Mobile settings | 390×844 | `mobile-settings.png` (local-only evidence; not published) |
+| Mobile group creation | 390×844 | `mobile-new-group.png` (local-only evidence; not published) |
+| Mobile members | 390×844 | `mobile-members.png` (local-only evidence; not published) |
 
 ## Files and handoff
 

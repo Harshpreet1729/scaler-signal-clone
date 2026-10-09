@@ -1,6 +1,18 @@
 # Architecture proposal
 
-Status: awaiting approval. No services or application code exist yet. Decisions below are project proposals unless a source is cited.
+> **HISTORICAL — original Phase 0 proposal.** Implementation and deployment are complete. The proposal below preserves the original design and hosting evaluation; its approval requests and future tense describe that planning stage. See the [current README](../README.md#system-architecture) and [final verification](FINAL_VERIFICATION.md).
+
+## Shipped architecture: current clarification
+
+- Next.js + TypeScript UI and allowlisted authenticated REST gateway; FastAPI + authenticated WebSockets; SQLite + SQLAlchemy + Alembic on Railway's persistent `/data` volume. Both services are on Railway; the original Vercel/Render recommendation below was superseded.
+- Opaque cookie sessions, one-use first-frame socket tickets, mock OTP, active membership checks and one backend worker/replica are implemented. Groups, receipts, typing, reactions, editable profiles and unified sidebar search are shipped.
+- Delivery/read acknowledgments use REST; `receipt.updated` arrives over WebSocket. Removal uses `membership.removed`. Proposed client `receipt.delivered`/`receipt.read` socket commands and `/health/ready` are not implemented; liveness is `/health/live`.
+- The implementation uses one process-wide mutation lock and timed socket sends, rather than the proposed per-conversation queues. Reconnect uses capped exponential backoff without jitter, with REST reconciliation. These are demo-scale choices, not horizontal scalability claims.
+- Reactions use `POST /conversations/{id}/reactions`, `reaction.updated`, and additive migration `0002`. See [current contracts](../README.md#database-and-api) and [reaction migration/rollback](REACTIONS_MIGRATION_PLAN.md). No real E2EE is implemented.
+
+## Original proposal (historical)
+
+Original status at Phase 0: awaiting approval; no application code or services existed then. Decisions below were proposals unless a source was cited.
 
 ## Components and ownership
 

@@ -233,7 +233,7 @@ npm run build
 
 Playwright starts real Next.js and FastAPI services on ports **3100/8100**, migrates/seeds a **temporary test SQLite database**, and uses independent browser contexts. It does not use the developer or production database. Backend tests cover authorization, transactions, WebSocket behavior, membership and reaction integrity; browser tests exercise onboarding, messaging, groups, receipts, search, reactions and responsive navigation.
 
-The latest profile release passed **four targeted desktop/mobile profile tests**, lint, typecheck and production build. Public checks verified saves/reloads/new logins, two-user messaging, typing, read receipts, live reaction counts and persistence after refresh. Historical full-suite evidence is linked below; documentation-only updates do not rerun or imply a new full-suite pass.
+Latest verified full suites: **85 backend tests passed; 53 browser tests passed, 1 expected skip, 0 failures**. The browser result follows the final test-maintenance commit `b44d7ca` (title and fixture-isolation assertions). The skip is a desktop-only Settings/selected-pane scenario on the mobile project; mobile receipt coverage remains active. Subsequent CSS-only menu polish at `49288af` passed six targeted desktop/mobile checks, lint, typecheck, build and public menu smoke tests. See [final verification](docs/FINAL_VERIFICATION.md). These are recorded results; documentation cleanup did not rerun the suites.
 
 Browser tests use Next dev and can replace `.next` artifacts. Rebuild before `npm run start` to review production locally, and do not run dev and production against the same build directory. Chromium on Windows is verified; other browser engines and operating systems are not claimed as tested.
 
@@ -245,6 +245,7 @@ Browser tests use Next dev and can replace `.next` artifacts. Rebuild before `np
 - Sidebar message search covers **loaded history**; it is not a server-wide full-text index.
 - Pending drafts/retry state are in memory. Refresh restores committed messages, not unsent drafts.
 - WebSocket fan-out, ticket state and rate limiting are process-local. The current deployment does not support multiple backend workers/replicas.
+- Historical group messages from a removed member who is absent from the contact directory can show a generic sender label after reload; message content remains stored.
 - Profile edits update the signed-in user's UI immediately; other clients obtain updated profile data on a normal refresh.
 
 ## Project map and documentation
@@ -256,6 +257,7 @@ backend/        FastAPI routes/services, relational models, Alembic and pytest
 docs/           Requirements, architecture, QA and deployment procedures
 ```
 
+- [Final verification and submission status](docs/FINAL_VERIFICATION.md)
 - [Assignment acceptance checklist](docs/REQUIREMENTS.md) · [Acceptance scenarios](docs/ACCEPTANCE_TESTS.md)
 - [Architecture decisions](docs/ARCHITECTURE.md) · [Database design](docs/DATABASE_DESIGN.md)
 - [Approved visual reference](docs/SIGNAL_UI_REFERENCE.md) · [Signal fidelity QA](docs/SIGNAL_FIDELITY_QA.md)

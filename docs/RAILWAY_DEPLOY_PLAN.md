@@ -4,7 +4,9 @@ Status: deployment authorized and executed, 9 October 2026. Submission deadline:
 
 Live-build correction: omit `RAILPACK_INSTALL_CMD`. With `packageManager: npm@11.6.2`, Railpack 0.40.1's custom install override skipped Corepack preparation and failed exporting `/opt/corepack`. The successful build used Railpack's default Corepack setup and `npm install` with the committed lockfile. Local installation remains `npm ci`. No application dependencies or runtime pins changed.
 
-This can host the current Phase 4 demo; it does **not** complete the assignment. Group writes/sending, typing and live delivered/read acknowledgments remain Phase 5 work. Existing mock-OTP/no-E2EE notices must remain visible. Only fictitious profiles, original avatars and explicit sample fixtures belong in the public demo.
+**Current operational status:** Both services are deployed on Railway. Groups/admin management, delivered/read receipts, typing, reactions, profiles and sidebar search are implemented; the original Phase 4 preflight limits below are historical. See [current verification](FINAL_VERIFICATION.md) and the [README](../README.md).
+
+**Existing production database:** Preserve `/data` and revision `0002`; do not provision a replacement database or run the first-time seed recipe against the populated demo. For migration compatibility and rollback, use the [reaction release procedure](REACTIONS_MIGRATION_PLAN.md#rollback--failure-recovery). The recipe below originated before the initial deployment; historical test counts and pricing snapshots are not new measurements. Existing mock-OTP/no-E2EE notices must remain visible. Only fictitious profiles, original avatars and explicit sample fixtures belong in the public demo.
 
 ## Service contracts
 
@@ -61,7 +63,7 @@ Runtime pins use Railpack's supported override keys; existing npm lockfile and f
 5. Set `PORT=8080` on both services. Settings → Networking → Generate Domain for each, target port **8080**. Record actual domains in the placeholders above. Explicit port selection permits configuring domains before source deployment; if the UI requires a deployment first, pause and adapt the staged setup rather than launching with guessed Origin/WS values. Railway documents custom PORT/domain targets. [Monorepo domain setup](https://docs.railway.com/guides/deploying-a-monorepo).
 6. Variables → enter the table values with final domains. Generate a new random gateway key locally, paste the same value into both services, never into source/screenshots/logs. Confirm the volume-provided mount variable exists at runtime. Set backend healthcheck `/v1/health/live`, frontend `/api/health/live`, timeout 300 seconds. Healthchecks gate deployment but do not continuously monitor uptime. [Healthchecks](https://docs.railway.com/deployments/healthchecks).
 7. After repository approval/publication, connect the chosen repository/branch to **backend**, review staged changes, deploy backend first. Logs must show successful startup after migration; missing mount or failed migration must keep it offline. Check `https://<BACKEND_DOMAIN>/v1/health/live` returns `{"status":"ok","service":"scaler-signal-api"}`.
-8. Perform the explicit first-time seed below. Connect/deploy **frontend** only after its final build-time WS URL and server-only variables are set. Confirm the build log uses pinned Node and `npm ci`; start log binds the configured port. Check frontend `/api/health/live` matches backend response.
+8. Perform the explicit first-time seed below. Connect/deploy **frontend** only after its final build-time WS URL and server-only variables are set. Confirm the build log uses pinned Node and the default Corepack/lockfile install; start log binds the configured port. Check frontend `/api/health/live` matches backend response.
 9. Run the HTTPS/WSS and persistence checks below before handing out the demo URL. Preserve source/version identifiers, variables without secrets, migration revision and test observations in the release record. Do not call the assignment complete while Phase 5 requirements are missing.
 
 One volume cannot be shared by active deployments/replicas; Railway serializes volume-backed redeploys with brief downtime. Keep the backend single-worker because tickets/socket routing are in-process; outstanding tickets expire across restart and clients mint replacements/reconcile history. [Volume limitations](https://docs.railway.com/volumes/reference).
@@ -83,7 +85,7 @@ python -m alembic current
 python -c 'import sqlite3; from contextlib import closing; c=sqlite3.connect("file:/data/signal.sqlite3?mode=ro", uri=True); print("users:", c.execute("select count(*) from users").fetchone()[0]); c.close()'
 ```
 
-Only if this is the intended fresh DB at revision `0001` with **zero users**, run:
+For a separately authorized **new installation only**, first confirm the intended fresh DB is at migration `head` (currently `0002`) with **zero users**. Then run:
 
 ```sh
 python -m app.seed
@@ -100,7 +102,7 @@ Expected inserts: 4 users, 6 contacts, 3 conversations, 7 members, 6 messages, 8
 5. Alice sends a fictitious message in their direct chat; Bob receives it without refresh. Bob replies; both see one committed copy. Reload both; messages persist. Wrong-user conversation IDs must return 403/404 and an unapproved socket Origin must fail. Temporarily disconnect/reconnect a browser and confirm history reconciliation.
 6. Check no mixed-content, certificate, framework or application console errors. Railway supports HTTPS and WebSocket over HTTP/1.1, but the actual two-domain WSS/TLS path remains unverified until deployment. [Networking specifications](https://docs.railway.com/networking/public-networking/specs-and-limits).
 
-Do not interpret current sent acknowledgment as implemented live delivered/read progression; that is still a later phase.
+Historical preflight limitation: only sent acknowledgments existed then. Live delivered/read progression is now implemented and verified; see [final verification](FINAL_VERIFICATION.md).
 
 ## Persistence, backup and rollback
 
@@ -152,4 +154,4 @@ Use Workspace Usage alerts and an owner-approved compute hard limit; hard limits
 - No developer SQLite was seeded/migrated/reset. No external changes. Git diff unavailable because no repository exists.
 - Temporary production servers were stopped; the normal local build/frontend at `http://127.0.0.1:3000/` was restored. Direct backend health at port 8000 and frontend-forwarded health both returned the expected response. Screenshot evidence: `C:\Users\HarshPC\.codex\visualizations\2026\10\08\01a11b98-36ec-7431-a3fd-6f185920e179\railway-production-desktop.png` (1440×900, throwaway smoke data only).
 
-Live gates: Linux Railpack image/package build, actual mounted-volume permissions, HTTPS cookie header, cross-domain WSS/Origin, restart/redeploy persistence, backup restoration, owner-selected budget and explicit repository/deployment approval. Public URLs are still unassigned. This preflight does not authorize Phase 5 or final submission.
+Historical preflight gates (subsequently addressed by approved deployment and reaction-release verification): Linux Railpack build, mounted-volume permissions, HTTPS cookies, WSS/Origin, restart/redeploy persistence, backup restore and owner approval. Public URLs were unassigned at preflight; current endpoints and status are in [final verification](FINAL_VERIFICATION.md). This historical preflight is not authorization for new work or submission.

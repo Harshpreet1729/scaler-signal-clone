@@ -1,5 +1,7 @@
 # Scaler Signal Clone: Phase 4 Deployment Review and Phase 5 Authorization
 
+> **HISTORICAL — phase/release record.** Scope, approvals, test counts, database revisions and pending gates below describe that release, not the finished application. See the [current README](../README.md) and [final verification](FINAL_VERIFICATION.md) for shipped features and latest results. This record is retained as evidence, not a new execution instruction.
+
 Date: 9 October 2026
 Hard deadline: Friday 9 October 2026, 6:00 PM IST
 

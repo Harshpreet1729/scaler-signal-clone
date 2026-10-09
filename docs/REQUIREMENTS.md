@@ -1,8 +1,8 @@
 # Requirements and acceptance checklist
 
-Original Phase 0 checklist, reviewed 2026-10-08. Approved choices and implemented acceptance evidence are recorded in [Phase 5 deployment](PHASE_5_DEPLOYMENT.md) and [Phase 6 QA](PHASE_6_QA.md). The original unchecked boxes below preserve the specification; they are not a current implementation-status report.
+**HISTORICAL — original Phase 0 checklist**, reviewed 2026-10-08. Current shipped functionality and final test results are summarized in the [README](../README.md) and [final verification](FINAL_VERIFICATION.md). Approved choices and implemented acceptance evidence are recorded in [Phase 5 deployment](PHASE_5_DEPLOYMENT.md) and [Phase 6 QA](PHASE_6_QA.md). The original unchecked boxes below preserve the specification; they are not a current implementation-status report.
 
-Authority: [assignment PDF](../Scaler_SDE_Fullstack_Assignment_-_Signal_Clone.pdf), all four physical pages read and visually inspected. Page numbers below refer to those pages. The PDF contains no UI screenshots. Project rules: [AGENTS.md](../AGENTS.md). Checkboxes mean acceptance is still outstanding, not that documentation has implemented anything.
+Authority: [assignment PDF](../Scaler_SDE_Fullstack_Assignment_-_Signal_Clone.pdf), all four physical pages read and visually inspected. Page numbers below refer to those pages. The PDF contains no UI screenshots. Project rules: [AGENTS.md](../AGENTS.md). Unchecked boxes are preserved from Phase 0 as specification markers; they do not indicate current missing features. Submission and interview understanding still require the owner's actions.
 
 ## Mandatory functionality
 
