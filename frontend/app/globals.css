@@ -28,7 +28,7 @@ svg { flex-shrink: 0; vertical-align: middle; }
 .navigation-rail { background: var(--sidebar-bg); border-right: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; padding: 4px 8px 9px; gap: 5px; }
 .rail-items, .rail-bottom { display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .rail-items .icon-button, .rail-bottom .icon-button { width: 56px; height: 40px; }
-.rail-items .icon-button[aria-pressed="true"] svg { fill: currentColor; }
+.navigation-rail .icon-button[aria-pressed="true"] { background: #e5e5e5; }
 .rail-bottom { margin-top: auto; }
 
 .conversation-sidebar { background: var(--sidebar-bg); border-right: 1px solid var(--line); min-width: 0; display: flex; flex-direction: column; overflow: hidden; }

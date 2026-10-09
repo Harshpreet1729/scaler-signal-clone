@@ -5,8 +5,8 @@ import type { Profile } from "./types";
 import type { ApiUser } from "./use-chat-data";
 
 const categories: { name: string; icon: IconName }[] = [
-  { name: "Account", icon: "user" }, { name: "General", icon: "settings" },
-  { name: "Appearance", icon: "sun" }, { name: "Chats", icon: "chat" },
+  { name: "Account", icon: "account" }, { name: "General", icon: "settings" },
+  { name: "Appearance", icon: "appearance" }, { name: "Chats", icon: "chat" },
   { name: "Calls", icon: "phone" }, { name: "Notifications", icon: "bell" },
   { name: "Privacy", icon: "lock" }, { name: "Data usage", icon: "data" },
   { name: "About", icon: "info" },

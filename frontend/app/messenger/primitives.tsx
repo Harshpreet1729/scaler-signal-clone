@@ -6,7 +6,7 @@ export function IconButton({ icon, label, onClick, active, className = "", disab
   icon: IconName; label: string; onClick: () => void; active?: boolean; className?: string; disabled?: boolean;
 }) {
   return <button type="button" className={"icon-button " + className} aria-label={label} title={label}
-    aria-pressed={active} onClick={onClick} disabled={disabled}><Icon name={icon} /></button>;
+    aria-pressed={active} onClick={onClick} disabled={disabled}><Icon name={icon} size={icon === "compose" ? 24 : 22} filled={active && (icon === "chat" || icon === "settings")} /></button>;
 }
 export function Avatar({ avatar, name, size = 44 }: { avatar: string; name: string; size?: number }) {
   return avatar === "group" ? <span className="avatar group-avatar" style={{ width: size, height: size }} role="img" aria-label={name + " avatar"}><Icon name="group" size={Math.round(size * .55)} /></span>
