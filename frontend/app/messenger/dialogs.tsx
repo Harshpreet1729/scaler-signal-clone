@@ -77,8 +77,8 @@ function Settings({ profile, onLogout, busy }: Pick<Props, "profile" | "onLogout
         <div className="settings-row"><span>Account type<small>Public fixed-OTP authentication</small></span><span className="muted">Demo</span></div>
         <button className="secondary-button logout-button" onClick={onLogout} disabled={busy}><Icon name="logout" size={18} />{busy ? "Logging out…" : "Log out"}</button>
       </> : <>
-        <p className="preview-note">Settings preview. These controls are not connected.</p>
-        {category === "Privacy" && <><Setting label="Read receipts" detail="Enabled for this demo; preference is a placeholder" /><Setting label="Typing indicators" detail="Enabled for this demo; preference is a placeholder" /><p className="privacy-note"><Icon name="shield" size={18} />This assignment demo does not implement end-to-end encryption.</p></>}
+        <p className="preview-note">Settings preview. Preference controls are placeholders.</p>
+        {category === "Privacy" && <><Setting label="Read receipts" detail="Enabled for this demo; preference is a placeholder" checked /><Setting label="Typing indicators" detail="Enabled for this demo; preference is a placeholder" checked /><p className="privacy-note"><Icon name="shield" size={18} />This assignment demo does not implement end-to-end encryption.</p></>}
         {category === "Notifications" && <><Setting label="Message notifications" detail="In-app incoming-message toasts are enabled" checked /><Setting label="Play notification sounds" detail="No sounds are played in this preview" /><div className="settings-row"><span>Show in notifications<small>Name and message</small></span><Icon name="chevron" size={18} /></div></>}
         {category === "Appearance" && <><div className="settings-row"><span>Theme<small>Light</small></span><span className="theme-swatch" /></div><p>Light theme is the approved desktop reference. Dark mode is deferred.</p><div className="settings-row"><span>Chat color<small>Blue</small></span><span className="color-swatch" /></div></>}
       </>}

@@ -1,6 +1,6 @@
 # Requirements and acceptance checklist
 
-Status: Phase 0 proposal, awaiting approval. Reviewed 2026-10-08.
+Original Phase 0 checklist, reviewed 2026-10-08. Approved choices and implemented acceptance evidence are recorded in [Phase 5 deployment](PHASE_5_DEPLOYMENT.md) and [Phase 6 QA](PHASE_6_QA.md). The original unchecked boxes below preserve the specification; they are not a current implementation-status report.
 
 Authority: [assignment PDF](../Scaler_SDE_Fullstack_Assignment_-_Signal_Clone.pdf), all four physical pages read and visually inspected. Page numbers below refer to those pages. The PDF contains no UI screenshots. Project rules: [AGENTS.md](../AGENTS.md). Checkboxes mean acceptance is still outstanding, not that documentation has implemented anything.
 
@@ -67,7 +67,7 @@ P03-P06 are permitted sections, not extra mandatory functioning features. Any di
 | C05 | [ ] Study Signal before UI work; match original design/UX closely, including the PDF's explicit exact-look-and-feel instruction. | pp. 1, 3 |
 | C06 | [ ] Original work; plagiarism from existing repositories causes disqualification. | p. 3 |
 | C07 | AI assistance is allowed and encouraged; [ ] student understands every submitted line and can explain decisions. | p. 1 |
-| C08 | Estimated effort approximately 24 hours; deadline is communicated separately and is currently unknown. | p. 4 |
+| C08 | Estimated effort approximately 24 hours; PDF says deadline is communicated separately. Owner-confirmed deadline: 9 October 2026, 6 PM IST. | p. 4 + owner instruction |
 | D01 | [ ] Public GitHub repository containing `frontend/` and `backend/`; upload code and ensure public visibility. | p. 3, Deliverables/Submission |
 | D02 | [ ] README: setup, stack, architecture, schema, API overview, assumptions. | p. 3, Important Notes/Deliverables |
 | D03 | [ ] Hosted working application; cloud provider is flexible (Vercel, Netlify, Render, Railway are examples). | p. 3 |

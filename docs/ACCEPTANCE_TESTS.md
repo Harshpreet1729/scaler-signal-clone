@@ -1,6 +1,6 @@
 # End-to-end acceptance scenarios
 
-Status: specifications only; **none executed**. Requirement IDs refer to [REQUIREMENTS.md](REQUIREMENTS.md). P = project rule/design invariant beyond explicit PDF wording. Execute against real FastAPI + isolated SQLite, not mocked messaging APIs. Alice, Bob and Carol use separate browser contexts/cookie stores; extra tabs test one account's multiple connections. Stabilize clock/fixtures for screenshots.
+Original Phase 0 scenario specifications. Execution evidence is in [Phase 5 deployment](PHASE_5_DEPLOYMENT.md) and [Phase 6 QA](PHASE_6_QA.md); do not interpret the historical planning text as current test results. Requirement IDs refer to [REQUIREMENTS.md](REQUIREMENTS.md). P = project rule/design invariant beyond explicit PDF wording. Execute against real FastAPI + isolated SQLite, not mocked messaging APIs. Alice, Bob and Carol use separate browser contexts/cookie stores; extra tabs test one account's multiple connections. Stabilize clock/fixtures for screenshots.
 
 | ID / coverage | Setup and actions | Required observable result |
 |---|---|---|

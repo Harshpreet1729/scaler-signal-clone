@@ -134,6 +134,8 @@ test("chat menus, loaded search, settings and placeholder dialogs retain keyboar
   await expect(page.getByText("@alice", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Privacy", exact: true }).click();
   await expect(page.getByRole("checkbox", { name: "Read receipts (preview)" })).toBeDisabled();
+  await expect(page.getByRole("checkbox", { name: "Read receipts (preview)" })).toBeChecked();
+  await expect(page.getByRole("checkbox", { name: "Typing indicators (preview)" })).toBeChecked();
   await page.getByRole("button", { name: "Notifications", exact: true }).click();
   await expect(page.getByRole("checkbox", { name: "Message notifications (preview)" })).toBeDisabled();
   await page.getByRole("button", { name: "Appearance", exact: true }).click();
@@ -245,6 +247,7 @@ test("real-data screenshots and viewport geometry", async ({ page }, testInfo) =
   await capture(mobile ? "mobile-list" : "desktop-empty-1440");
   await page.getByRole("button", { name: /Bob Patel/ }).first().click();
   await expect(page.getByRole("region", { name: "Message history" }).locator(".message-bubble")).not.toHaveCount(0);
+  await expect(page.getByText("Sent · Delivered · Read acknowledgments", { exact: true })).toHaveCount(0);
   await capture(mobile ? "mobile-direct" : "desktop-direct-1440");
   await back(page);
   await page.getByRole("button", { name: /Weekend Plans/ }).click();

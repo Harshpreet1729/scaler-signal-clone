@@ -32,7 +32,7 @@ export function Composer({ conversationId, onSend, onUnavailable, onTyping }: { 
       </div>
       <button className="send-button" type="submit" aria-label="Send message" title={onSend ? "Send message" : "Messaging unavailable"} disabled={!draft.trim() || busy || !onSend}><Icon name="send" /></button>
     </form>
-    <p className="composer-note">{onSend ? "Sent · Delivered · Read acknowledgments" : "Messaging unavailable"}</p>
+    {!onSend && <p className="composer-note">Messaging unavailable</p>}
   </div>;
 }
 
@@ -43,7 +43,7 @@ function MessageBubble({ message, previous, next, person, isGroup }: { message: 
   return <div data-message-id={message.id} data-unread={message.unread ? "true" : undefined} className={"message-row " + message.direction + (startsGroup ? " group-start" : "") + (endsGroup ? " group-end" : "")}>
     {!outgoing && isGroup && <span className={"sender-avatar " + (!endsGroup ? "avatar-spacer" : "")}><Avatar avatar={person.avatar} name={person.name} size={28} /></span>}
     <div className="message-bubble">
-      {!outgoing && isGroup && startsGroup && <span className="sender-name" style={{ color: person.color }}>{person.name.split(" ")[0]} {person.name.split(" ")[1]}</span>}
+      {!outgoing && isGroup && startsGroup && <span className="sender-name" style={{ color: person.color }}>{person.name}</span>}
       <span className="message-body">{message.body}</span><span className="message-meta"><time>{message.time}</time>{outgoing && message.receipt && <Receipt state={message.receipt} />}</span>
     </div>
   </div>;
@@ -57,9 +57,16 @@ export function ChatPane({ conversation, messages, people, onBack, onDetails, on
   onLoadOlder?: () => void; hasOlder?: boolean;
 }) {
   const history = useRef<HTMLDivElement>(null);
+  const firstMessageId = messages[0]?.id;
+  const previousHistory = useRef<{ conversationId?: string; firstMessageId?: string; count: number }>({ count: 0 });
   useEffect(() => {
-    if (history.current) history.current.scrollTop = history.current.scrollHeight;
-  }, [conversation?.id, messages.length]);
+    const previous = previousHistory.current;
+    const prepended = previous.conversationId === conversation?.id && messages.length > previous.count
+      && previous.firstMessageId !== undefined && previous.firstMessageId !== firstMessageId;
+    // Loading an earlier page should reveal it rather than jump back to the latest message.
+    if (history.current) history.current.scrollTop = prepended ? 0 : history.current.scrollHeight;
+    previousHistory.current = { conversationId: conversation?.id, firstMessageId, count: messages.length };
+  }, [conversation?.id, firstMessageId, messages.length]);
   useEffect(() => {
     const root = history.current;
     if (!root || !conversation) return;

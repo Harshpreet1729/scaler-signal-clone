@@ -3,8 +3,8 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Signal | Assignment preview",
-  description: "An original Signal-inspired messaging assignment with demo accounts and a static conversation preview.",
+  title: "Signal-inspired Messenger | Scaler Assignment",
+  description: "An original messaging assignment with demo accounts, persistent direct and group chats, and real-time delivery. No real end-to-end encryption.",
   icons: { icon: "data:," },
 };
 

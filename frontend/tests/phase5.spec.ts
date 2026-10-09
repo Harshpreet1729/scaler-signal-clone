@@ -52,6 +52,12 @@ test("reconnect repairs multiple history pages and an older read receipt", async
     await expect(page.locator(".preview-caption")).toHaveText("Messages · connected", { timeout: 20000 });
     await expect(history(page).locator(".message-bubble")).toHaveCount(56);
     await expect(history(page).locator(".message-bubble").filter({ hasText: "Older receipt anchor" }).getByLabel("Status: read", { exact: true })).toHaveCount(1);
+    await bob.reload();
+    await bob.getByRole("button", { name: new RegExp(name) }).click();
+    await expect(history(bob).locator(".message-bubble")).toHaveCount(50);
+    await bob.getByRole("button", { name: "Load older messages" }).click();
+    await expect(history(bob).locator(".message-bubble")).toHaveCount(56);
+    await expect(history(bob).getByText("Older receipt anchor", { exact: true })).toBeInViewport();
   } finally { await bobContext.close(); }
 });
 

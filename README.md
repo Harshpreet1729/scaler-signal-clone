@@ -1,6 +1,6 @@
 # Scaler Signal assignment
 
-**Phase 5 adds group creation/admin membership and messaging, durable delivered/read acknowledgments, unread state, typing and incoming toasts** to the authenticated Signal-inspired app. Local validation: 78 backend tests, 32 desktop/mobile browser tests, lint, TypeScript and production build pass. See [Phase 5 handoff and actual validation](docs/PHASE_5_HANDOFF.md).
+**The deployed app supports direct/group messaging, admin membership, durable delivered/read acknowledgments, unread state, typing and incoming toasts.** Phase 5 validation: 78 backend tests, 32 desktop/mobile browser tests, lint, TypeScript and production build passed. See [Phase 5 production verification](docs/PHASE_5_DEPLOYMENT.md) and [Phase 6 submission QA](docs/PHASE_6_QA.md).
 
 Access the [public demo](https://frontend-production-5f84.up.railway.app/), [public repository](https://github.com/Harshpreet1729/scaler-signal-clone) and [backend health](https://backend-production-5383.up.railway.app/v1/health/live). The owner authorized the Phase 5 production rollout on 9 October; GitHub pushes deploy both existing services. The earlier [Phase 4 production verification](docs/RAILWAY_DEPLOYMENT.md) is historical evidence, not a Phase 5 test report.
 
@@ -27,7 +27,7 @@ npx playwright install chromium
 
 `configure_local` explicitly creates ignored `backend/.env` and `frontend/.env` with a shared random gateway key. It prints no key, preserves existing matching files, and refuses to overwrite partial/mismatched configuration. On an existing checkout, reuse the venv and local environment files. If `.env.local` already exists, review it: Next gives it precedence over `.env`. Safe names/defaults are in each `.env.example`; auth needs matching nonempty `INTERNAL_API_KEY` values, at least 32 characters. Never use `NEXT_PUBLIC_` for that key or the backend REST URL.
 
-Migrations and seeds never run during ordinary startup. No reset command is provided. Preserve the SQLite file and its WAL/SHM sidecars; do not delete them to fix an error.
+Local development startup runs neither migrations nor seeds. Production startup runs migrations after the persistent volume mounts and never seeds automatically. No reset command is provided. Preserve the SQLite file and its WAL/SHM sidecars; do not delete them to fix an error.
 
 Dependencies are exact pins: frontend `package.json` + `package-lock.json` (`npm ci`), backend direct `requirements.in` + fully resolved `requirements.txt`. Existing frontend packages were retained: Next 16.4.0, React 19.3.0, TypeScript 5.9.3, ESLint 10.12.0, Playwright 1.64.0. Phase 2 adds **SQLAlchemy 2.1.4 and Alembic 1.20.0**, with Mako 1.4.3 and MarkupSafe 3.0.4 transitively. FastAPI 0.143.0/Uvicorn 0.54.0 remain unchanged. Tests use pytest 9.1.1 and Starlette's current `httpx2` 2.13.1 TestClient dependency.
 
@@ -148,4 +148,4 @@ Phase 5 commit/push and rollout to the existing Railway services are authorized.
 
 `BACKEND_BASE_URL` and the matching gateway key stay server-only. `NEXT_PUBLIC_WS_URL` is a credential-free WSS endpoint embedded during build. Exact HTTPS `FRONTEND_ORIGIN` must match both services. Budget remains $10/month with the existing hard limit unchanged; this rollout provisions no resources and changes no billing settings. Public verification must confirm the new release before declaring deployment complete.
 
-Calls, stories, linked devices and privacy/notification/appearance preferences remain labeled placeholders. Presence is mocked. Attachments, reactions, quoted replies, dark mode and disappearing messages are deferred. No real encryption is claimed. Phase 6 integration/pixel QA and Phase 7 final submission remain separately gated; do not submit automatically.
+Calls, stories, linked devices and privacy/notification/appearance preferences remain labeled placeholders. Presence is mocked. Attachments, reactions, quoted replies, dark mode and disappearing messages are deferred. No real encryption is claimed. Phase 6 review and targeted polish are documented in `docs/PHASE_6_QA.md`; submitting both public URLs remains the owner's action. Do not submit automatically.
