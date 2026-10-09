@@ -24,6 +24,7 @@ function ProfileEditor({ profile, csrf, onProfileChange, busy: signingOut }: { p
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const nameInput = useRef<HTMLInputElement>(null);
+  useEffect(() => { if (!saving && (notice || error)) nameInput.current?.focus(); }, [saving, notice, error]);
   const dirty = name !== profile.display_name || avatar !== profile.avatar_key;
   const busy = saving || signingOut;
   function cancel() { setName(profile.display_name); setAvatar(profile.avatar_key); setError(""); setNotice(""); nameInput.current?.focus(); }
@@ -38,7 +39,7 @@ function ProfileEditor({ profile, csrf, onProfileChange, busy: signingOut }: { p
       const response = await chatApi<{ user: Profile }>("/api/users/me", csrf, { display_name: displayName, avatar_key: avatar }, "PATCH");
       onProfileChange(response.user); setName(response.user.display_name); setAvatar(response.user.avatar_key); setNotice("Profile saved.");
     } catch (problem) { setError(problem instanceof Error ? problem.message : "Could not save your profile. Try again."); }
-    finally { setSaving(false); requestAnimationFrame(() => nameInput.current?.focus()); }
+    finally { setSaving(false); }
   }
   return <form className="profile-editor" onSubmit={save} aria-label="Edit profile" aria-busy={saving} noValidate>
     <div className="settings-profile"><Avatar avatar={avatar} name={avatar} size={76} /><p>Preset demo avatar</p></div>
