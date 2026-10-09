@@ -21,9 +21,9 @@ An original, full-stack messaging application built for the **Scaler SDE Fullsta
 <details>
 <summary><strong>Group messaging and reactions</strong></summary>
 
-![Desktop group conversation with the real six-choice reaction picker](docs/assets/screenshots/desktop-group.webp)
+![Desktop group conversation with live emoji reaction counts](docs/assets/screenshots/desktop-group.webp)
 
-*Cropped detail of the existing Weekend Plans conversation; opening the picker does not add a reaction or change message data.*
+*A fictional picnic exchange in Weekend Plans, sent through three independent demo sessions with live reaction counts.*
 
 </details>
 
